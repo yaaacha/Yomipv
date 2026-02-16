@@ -1,6 +1,6 @@
 # Yomipv
 
-Yomipv is a script that combines Yomitan with MPV to create cards from Japanese media without leaving the player.
+Yomipv is a script that combines Yomitan with MPV to create anki cards from Japanese media without leaving the player.
 There's no need to do alt tabs to switch between MPV, texthooker and Yomitan while mining or doing word lookups. 
 It was made designed to be used with [Senren Note Type v5.0.0](https://github.com/BrenoAqua/Senren), but it should work with any note type.
 
