@@ -45,8 +45,8 @@ TODO: Demo
 
 ### Advanced Features
 
-- **Append Mode (`C`)**: Select multiple subtitle lines before exporting
-  - Press `C` to enter append mode, `c` to export, or `C` again to cancel
+- **Append Mode (`Shift+C`)**: Select multiple subtitle lines before exporting
+  - Press `Shift+C` to enter append mode, `c` to start the word selector, or `Shift+C` again to cancel
 
 - **Selection Expansion**:
   - **`Ctrl+Left`** / **`Ctrl+Right`**: Expand selection to adjacent words
