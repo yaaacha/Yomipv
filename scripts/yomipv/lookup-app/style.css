@@ -1,0 +1,285 @@
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: rgba(30, 30, 30, 0.97);
+  --bg-tertiary: rgba(45, 45, 45, 0.6);
+  --border-color: #333;
+  --text-primary: #e0e0e0;
+  --text-secondary: #aaa;
+  --text-muted: #777;
+  --accent-color: #ffffff; 
+  --devoiced-color: cornflowerBlue;
+  --pitch-red: #F5436D;    /* atamadaka */
+  --pitch-blue: #39C1FF;   /* heiban */
+  --pitch-orange: #fca311; /* nakadaka */
+  --pitch-green: #40D4A6;  /* odaka */
+  --pitch-purple: #afa2ff; /* kifuku */
+  --pitch-accent-color: var(--accent-color);
+  --tag-bg: #3d3d3d;
+  --tag-text: #ddd;
+  --tag-bg-alt: #4a2b2b;
+  --link-color: #ffffff;
+  --font-serif: "Klee One", "Hiragino Mincho ProN", "Noto Serif CJK JP", "Yu Mincho", serif;
+  --font-sans: "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Segoe UI", sans-serif;
+  --radius: 8px;
+  --spacing: 12px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: transparent;
+  color: var(--text-primary);
+  overflow: hidden;
+  user-select: text;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: inherit;
+}
+
+#lookup-container {
+  background-color: var(--bg-secondary);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+}
+
+#term-header {
+  margin-bottom: 8px;
+  line-height: 1.1;
+  display: flex;
+  flex-direction: column;
+}
+
+.term-display {
+  display: inline-block;
+  color: var(--pitch-accent-color);
+  text-align: left;
+}
+
+.term-expression {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+#glossary-content {
+  font-size: 20px;
+  line-height: 1.5;
+  width: 100%;
+}
+
+.loading {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* Scrollbar styling */
+#lookup-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+#lookup-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#lookup-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+/* Yomitan UI Elements */
+
+/* Dictionary Header */
+[data-dictionary] {
+  margin-top: 14px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #3d3d3d;
+  display: block;
+}
+
+/* Eliminate top gap for first dictionary entry */
+[data-dictionary]:first-child {
+  margin-top: 0;
+}
+
+/* Title marker style */
+[data-dictionary] > *:first-child {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  font-style: normal !important;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+/* Remove dict version: Jitendex  */
+[data-dictionary*="Jitendex"] > *:first-child {
+    font-size: 0;
+}
+
+[data-dictionary*="Jitendex"] > *:first-child::before {
+    content: "JITENDEX";
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.12em;
+}
+
+/* Siblings block/inline layout */
+[data-dictionary] > *:not(:first-child) {
+    display: block;
+}
+
+/* POS tags */
+span[data-details] {
+  background-color: var(--tag-bg);
+  color: var(--tag-text);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-right: 4px;
+  vertical-align: middle;
+  display: inline-block;
+  margin-bottom: 2px;
+}
+
+/* Native tag highlighting */
+[data-details*="noun"], [data-details*="verb"], [data-details*="adj"] {
+  border-left: 2px solid var(--accent-color);
+}
+
+/* Glossary senses */
+ol, ul {
+  margin: 6px 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+/* Drop glossary below tags with internal joining */
+[data-sc-content="glossary"] {
+  display: block !important;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+[data-sc-content="glossary"] ol,
+[data-sc-content="glossary"] ul,
+[data-sc-content="glossary"] li {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+[data-sc-content="glossary"] li:not(:last-child)::after {
+  content: "|";
+  opacity: 0.5;
+  margin: 0 8px;
+  display: inline-block;
+}
+
+/* Preserve Jitendex top-level sense block structure */
+[data-dictionary*="Jitendex"] > ol > li,
+[data-dictionary*="Jitendex"] > ul > li {
+  display: block !important;
+  margin-bottom: 12px;
+}
+
+/* Jitendex list styling overrides */
+[data-dictionary*="Jitendex"] ol, 
+[data-dictionary*="Jitendex"] ul,
+[data-dictionary*="Jitendex"] li {
+  display: block;
+  margin-bottom: 8px;
+  padding: 0;
+  list-style: none !important;
+}
+
+[data-dictionary*="Jitendex"] li::before {
+  content: none !important;
+}
+
+/* Devoiced Mora */
+span[style*="border:1.5px dotted #c83c28"] {
+  display: none !important;
+}
+
+span[style*="display:inline-block;position:relative;"] > 
+span[style*="display:inline"]:has(+ span[style*="border:1.5px dotted #c83c28"]) {
+  color: var(--devoiced-color) !important;
+}
+
+[data-sc-content="extra-info"] {
+  font-size: 16px !important;
+}
+
+/* Ruby styling */
+#term-header ruby {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  ruby-position: over;
+  ruby-align: center;
+}
+
+#term-header rt {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  color: inherit;
+  padding-bottom: 3px;
+}
+
+/* Supplementary info */
+[data-details="See also"] {
+  display: inline-block;
+  color: var(--text-muted);
+  margin-right: 4px;
+  font-size: 13px;
+}
+
+/* Disabled links */
+a, [data-link] {
+  color: inherit !important;
+  text-decoration: none !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+/* Supplemental blocks and examples */
+div[style*="border-left"] {
+  background-color: rgba(60, 60, 60, 0.25) !important;
+  padding: 10px 14px !important;
+  border-radius: 4px;
+  margin: 10px 0;
+  border-left: 3px solid #555 !important;
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+[data-sc-content="attribution"] {
+  display: none !important;
+}
+
+[data-sc-content="forms"] {
+  display: none !important;
+}
+
+.separator {
+  opacity: 0.5;
+  margin: 0 4px;
+}

@@ -1,0 +1,202 @@
+--[[ Selector rendering engine                              ]]
+--[[ OSD measurement, line wrapping, and ASS tag generation ]]
+
+local mp = require("mp")
+local Display = require("lib.display")
+
+local Renderer = {}
+
+local measure_overlay = mp.create_osd_overlay("ass-events")
+measure_overlay.compute_bounds = true
+measure_overlay.hidden = true
+
+local function measure_width(text, size, font, bold)
+	if not text or text == "" then
+		return 0
+	end
+	local ow, oh = mp.get_osd_size()
+	if not ow or ow <= 0 then
+		ow, oh = 1280, 720
+	end
+	measure_overlay.res_x = ow
+	measure_overlay.res_y = oh
+
+	-- OSD markers to prevent trimming
+	local ass = string.format("{\\an7\\fs%d\\fn%s\\b%d}|%s|", size, font, bold and 1 or 0, text)
+	measure_overlay.data = ass
+	local res = measure_overlay:update()
+
+	local ass_m = string.format("{\\an7\\fs%d\\fn%s\\b%d}||", size, font, bold and 1 or 0)
+	measure_overlay.data = ass_m
+	local res_m = measure_overlay:update()
+
+	if not res or not res_m then
+		return 0
+	end
+	return math.max(0, (res.x1 - res.x0) - (res_m.x1 - res_m.x0))
+end
+
+function Renderer.render(selector)
+	if not selector.active or not selector.tokens or #selector.tokens == 0 then
+		return
+	end
+
+	local ow, oh = mp.get_osd_size()
+	if oh == 0 then
+		return
+	end
+
+	-- Scales to 720p base
+	local scale_factor = oh / 720.0
+
+	local base_font_size = mp.get_property_number("sub-font-size", 45)
+	local sub_scale = mp.get_property_number("sub-scale", 1.0)
+	local font_size = selector.style.font_size
+			and selector.style.font_size ~= 0
+			and math.floor(math.abs(selector.style.font_size) * scale_factor)
+		or math.floor(base_font_size * sub_scale * scale_factor)
+
+	local font_name = (selector.style.font_name and selector.style.font_name ~= "") and selector.style.font_name
+		or mp.get_property("sub-font", "sans-serif")
+	local sub_margin_y = mp.get_property_number("sub-margin-y", 22)
+	local sub_pos = (selector.style.pos_y and selector.style.pos_y >= 0) and selector.style.pos_y
+		or mp.get_property_number("sub-pos", 100)
+	local sub_bold = selector.style.bold ~= nil and selector.style.bold or mp.get_property_bool("sub-bold", true)
+
+	-- Color extraction
+	local border_size = (selector.style.border_size or mp.get_property_number("sub-border-size", 2)) * scale_factor
+	local shadow_offset = (selector.style.shadow_offset or mp.get_property_number("sub-shadow-offset", 0))
+		* scale_factor
+	local border_color =
+		Display.fix_color(selector.style.border_color or mp.get_property("sub-border-color", "000000"), "000000")
+	local shadow_color =
+		Display.fix_color(selector.style.shadow_color or mp.get_property("sub-shadow-color", "000000"), "000000")
+	local main_color = Display.fix_color(selector.style.color or mp.get_property("sub-color", "FFFFFF"), "FFFFFF")
+
+	-- Measure actual line spacing
+	local function get_line_spacing()
+		measure_overlay.res_x = ow
+		measure_overlay.res_y = oh
+		local style = string.format("{\\an7\\fs%d\\fn%s\\b%d}", font_size, font_name, sub_bold and 1 or 0)
+		measure_overlay.data = style .. "H"
+		local r1 = measure_overlay:update()
+		measure_overlay.data = style .. "H\\NH"
+		local r2 = measure_overlay:update()
+		if not r1 or not r2 then
+			return font_size * 1.25
+		end
+		-- Spacing calculated as (height of 2 lines) - (height of 1 line)
+		return (r2.y1 - r2.y0) - (r1.y1 - r1.y0)
+	end
+	local line_height = get_line_spacing()
+
+	-- Line preparation
+	local lines = {}
+	local current_line = { tokens = {}, width = 0 }
+	table.insert(lines, current_line)
+
+	local max_width = ow * (selector.style.max_width_factor or 0.9)
+	for i, token in ipairs(selector.tokens) do
+		local raw_text = token.text or ""
+		local search_pos = 1
+
+		while true do
+			local next_nl = raw_text:find("\n", search_pos)
+			local segment_text = raw_text:sub(search_pos, (next_nl and (next_nl - 1) or nil))
+
+			if segment_text ~= "" then
+				local tw = measure_width(segment_text, font_size, font_name, sub_bold)
+
+				-- Check auto-wrap
+				if current_line.width > 0 and current_line.width + tw > max_width then
+					current_line = { tokens = {}, width = 0 }
+					table.insert(lines, current_line)
+				end
+
+				table.insert(current_line.tokens, { index = i, visual_text = segment_text, width = tw })
+				current_line.width = current_line.width + tw
+			end
+
+			if not next_nl then
+				break
+			end
+
+			-- Explicit newline
+			current_line = { tokens = {}, width = 0 }
+			table.insert(lines, current_line)
+			search_pos = next_nl + 1
+		end
+	end
+
+	-- Removes trailing empty lines
+	while #lines > 1 and #lines[#lines].tokens == 0 do
+		table.remove(lines)
+	end
+
+	-- Hitboxes & ASS assembly
+	selector.token_boxes = {}
+	local margin_y = math.floor(sub_margin_y * scale_factor)
+	local y_base = math.floor((oh * sub_pos / 100) - margin_y)
+
+	local osd = Display:new()
+	osd:size(font_size)
+	osd:font(font_name)
+	local global_bold = sub_bold and "\\b1" or "\\b0"
+
+	-- Base style for text block
+	osd:append(
+		string.format(
+			"{\\an2\\pos(%d,%d)\\q2\\bord%g\\shad%g\\3c&H%s&\\4c&H%s&\\1c&H%s&%s}",
+			ow / 2,
+			y_base,
+			border_size,
+			shadow_offset,
+			border_color,
+			shadow_color,
+			main_color,
+			global_bold
+		)
+	)
+
+	for l_idx, line in ipairs(lines) do
+		-- y_line is bottom of current line
+		local y_line = y_base - (#lines - l_idx) * line_height
+		local current_x = (ow / 2) - (line.width / 2)
+
+		for _, t_seg in ipairs(line.tokens) do
+			local is_selected = (
+				t_seg.index >= selector.index and t_seg.index < selector.index + selector.selection_len
+			)
+
+			if is_selected then
+				local sel_color = Display.fix_color(selector.style.selection_color or "00FFFF", "00FFFF")
+				osd:append(string.format("{\\1c&H%s&}", sel_color))
+			end
+
+			osd:append(t_seg.visual_text)
+
+			if is_selected then
+				osd:append(string.format("{\\1c&H%s&}", main_color))
+			end
+
+			-- Update hitboxes
+			table.insert(selector.token_boxes, {
+				index = t_seg.index,
+				x1 = current_x,
+				y1 = y_line - font_size - (font_size * 0.05),
+				x2 = current_x + t_seg.width,
+				y2 = y_line + (font_size * 0.05),
+			})
+			current_x = current_x + t_seg.width
+		end
+
+		-- Add newline for visual separation if not last
+		if l_idx < #lines then
+			osd:append("\\N")
+		end
+	end
+
+	mp.set_osd_ass(ow, oh, osd:get_text())
+end
+
+return Renderer

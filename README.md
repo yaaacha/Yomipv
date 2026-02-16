@@ -1,0 +1,68 @@
+# Yomipv
+
+Yomipv is a script that combines Yomitan with MPV to create cards from Japanese media without leaving the player.
+There's no need to do alt tabs to switch between MPV, texthooker and Yomitan while mining or doing word lookups. 
+It was made designed to be used with [Senren Note Type v5.0.0](https://github.com/BrenoAqua/Senren), but it should work with any note type.
+
+TODO: Demo
+
+## Requirements
+
+- **[MPV](https://mpv.io/)** (0.33.0 or higher)
+- **[FFmpeg](https://ffmpeg.org/)** (Required for media extraction, but fallbacks to mpv's internal encoder if not found)
+- **[Anki](https://apps.ankiweb.net/)** with **[AnkiConnect](https://ankiweb.net/shared/info/2055492159)**
+- **[Yomitan](https://yomitan.wiki/)** and **[Yomitan Api](https://github.com/yomidevs/yomitan-api)**
+- **[Node.js](https://nodejs.org/)** (Required for the lookup app)
+- **curl** (Usually pre-installed on Windows, used for API requests)
+
+## Installation
+
+1. **Clone the repository** to your MPV directory:
+   - Windows: `%APPDATA%/mpv/`
+   - Linux: `~/.config/mpv/`
+
+2. **Install Dependencies**:
+   - Navigate to `scripts/yomipv/lookup-app/`
+   - Run `npm install` to install required Node.js packages.
+
+3. **Configure Settings**:
+   - Open `script-opts/yomipv.conf` and update your Anki deck/note type names and field mappings.
+
+4. **External Services**:
+   - Ensure Anki is running with AnkiConnect enabled.
+   - Ensure Yomitan Api is running and the browser where the Yomitan extension is installed is open, and you have dictionaries installed.
+
+## Usage
+
+### Basic Workflow
+
+1. Open a video with Japanese subtitles in MPV
+2. Press **`c`** to activate the word selector
+3. Navigate with **arrow keys** or **mouse hover** to select a word
+4. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
+
+### Advanced Features
+
+- **Append Mode (`C`)**: Select multiple subtitle lines before exporting
+  - Press `C` to enter append mode, `c` to export, or `C` again to cancel
+
+- **Selection Expansion**:
+  - **`Ctrl+Left`** / **`Ctrl+Right`**: Expand selection to adjacent words
+  - **`Shift+Left`** / **`Shift+Right`**: Expand to previous/next subtitle line
+
+- **Word Splitting (`s` or right-click)**: Split compound words into smaller segments
+
+- **Dictionary Lookup (`Ctrl+c`)**: Open real-time dictionary definitions window that uses your yomitan glossary
+
+- **History Panel (`a`)**: Toggle subtitle history panel
+  - Click on previous/next lines to select them to expand the subtitle lines (when selector is open) or seek to that timestamp (when selector is closed)
+
+## Troubleshooting
+
+### Windows
+- Ensure PowerShell execution policy allows scripts
+- Check that curl is available at `C:\Windows\System32\curl.exe`
+
+> [!WARNING]
+> **Linux Support Not Tested**
+> This script has primarily been developed and tested on Windows. While cross-platform support is intended, Linux users may encounter issues. Please report any bugs or compatibility problems.
