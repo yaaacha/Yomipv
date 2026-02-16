@@ -17,14 +17,16 @@ TODO: Demo
 
 ## Installation
 
-1. **Clone the repository** to your MPV directory:
+1. **Clone the repository** to your MPV directory and install dependencies:
    - Windows: `%APPDATA%/mpv/`
+     ```
+     git clone https://github.com/BrenoAqua/Yomipv && xcopy /e /i /y Yomipv . && rd /s /q Yomipv && cd scripts\yomipv\lookup-app && npm install
+     ```
+   
    - Linux: `~/.config/mpv/`
-
-2. **Install Dependencies**:
-   - Navigate to `scripts/yomipv/lookup-app/`
-   - Run `npm install` to install required Node.js packages.
-
+     ```
+     git clone https://github.com/BrenoAqua/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
+     ```
 3. **Configure Settings**:
    - Open `script-opts/yomipv.conf` and update your Anki deck/note type names and field mappings.
 
