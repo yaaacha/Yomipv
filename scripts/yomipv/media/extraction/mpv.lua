@@ -138,10 +138,7 @@ function MpvEncoder.generate_audio_args(config, source, output, start_time, end_
 		}
 	end
 
-	local aid = config.audio_aid or mp.get_property("aid", "auto")
-	if aid == "" then
-		aid = "auto"
-	end
+	local aid = mp.get_property("aid", "auto")
 
 	local base_args = build_base_command(
 		source,

@@ -128,8 +128,7 @@ local default_options = {
 
 	audio_use_ffmpeg = true, -- Use FFmpeg instead of MPV for extraction
 	audio_format = "opus", -- Format: mp3, opus
-	audio_bitrate = "64k", --
-	audio_aid = "auto", -- Audio track ID or "auto"
+	audio_bitrate = "64k",
 	filename_show_ms = true, -- Include milliseconds in filenames
 
 	--[[ Selector settings ]]

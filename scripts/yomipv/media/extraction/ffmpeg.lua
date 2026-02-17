@@ -122,16 +122,25 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 		table.insert(args, tostring(end_time - start_time))
 	end
 
-	-- Select audio track
-	local aid = config.audio_aid or mp.get_property("aid", "auto")
-	if aid ~= "auto" and tonumber(aid) then
-		table.insert(args, "-map")
-		table.insert(args, "0:a:" .. tostring(tonumber(aid) - 1))
-	else
-		-- Default to first stream
-		table.insert(args, "-map")
-		table.insert(args, "0:a:0")
+	-- Select currently playing audio track
+	local track_list = mp.get_property_native("track-list")
+	local audio_track_index = 0
+	local selected_track_index = 0
+
+	if track_list then
+		for _, track in ipairs(track_list) do
+			if track.type == "audio" then
+				if track.selected then
+					selected_track_index = audio_track_index
+					break
+				end
+				audio_track_index = audio_track_index + 1
+			end
+		end
 	end
+
+	table.insert(args, "-map")
+	table.insert(args, "0:a:" .. tostring(selected_track_index))
 
 	-- Set codec parameters
 	if config.audio_format == "opus" then
