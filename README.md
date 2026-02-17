@@ -17,7 +17,7 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 
 ## Installation
 
-1. **Clone the repository** to your MPV directory and install dependencies:
+1. **Clone the repository** to your MPV directory and install dependencies **(make sure you have Node.js installed)**:
    - Windows: `%APPDATA%/mpv/`
      ```
      git clone https://github.com/BrenoAqua/Yomipv && xcopy /e /i /y Yomipv . && rd /s /q Yomipv && cd scripts\yomipv\lookup-app && npm install
