@@ -20,7 +20,7 @@ Multiple markers can be specified as a comma-separated list
 Example:
 
 ```
-glossary_handlebar=single-glossary-新選国語辞典-第十版,single-glossary-デジタル大辞泉,single-glossary-漢検漢字辞典-第二版
+glossary_handlebar=single-glossary-DICT-NAME-1,single-glossary-DICT-NAME-2,single-glossary-DICT-NAME-3
 ```
 
 ---
@@ -29,7 +29,7 @@ glossary_handlebar=single-glossary-新選国語辞典-第十版,single-glossary-
 
 ```
 definition_handlebar=popup-selection-text
-definition_handlebar=single-glossary-jitendexorg-2026-01-04
+definition_handlebar=single-glossary-jitendexorg-DICT-NAME
 definition_handlebar=glossary
 ```
 
