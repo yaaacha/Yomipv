@@ -194,6 +194,9 @@ ipcRenderer.on('lookup-term', async (event, data) => {
           e.stopPropagation(); // Prevent event bubbling
 
           // Clear previous selections
+          glossaryEl.querySelectorAll('[data-dictionary] > *:first-child').forEach(child => {
+            child.classList.remove('selected');
+          });
 
           // Apply selection style
           titleEl.classList.add('selected');

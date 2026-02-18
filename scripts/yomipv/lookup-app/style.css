@@ -149,6 +149,10 @@ body {
     letter-spacing: 0.12em;
 }
 
+[data-dictionary*="Jitendex"] > *:first-child.selected::before {
+    color: var(--selection-color);
+}
+
 /* Siblings block/inline layout */
 [data-dictionary] > *:not(:first-child) {
     display: block;
