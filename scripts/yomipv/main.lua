@@ -210,9 +210,9 @@ Player.notify("Yomipv v" .. yomipv_version .. " loaded", "success", 2)
 -- Shutdown lookup app on exit
 mp.add_hook("on_pre_shutdown", 50, function()
 	msg.info("Sending shutdown signal to lookup app")
-	mp.command_native({
+	mp.command_native_async({
 		name = "subprocess",
 		playback_only = false,
-		args = { Platform.get_curl_cmd(), "-s", "-X", "POST", "http://127.0.0.1:19634/shutdown" },
+		args = { Platform.get_curl_cmd(), "-s", "-X", "POST", "--connect-timeout", "1", "http://127.0.0.1:19634/shutdown" },
 	})
 end)
