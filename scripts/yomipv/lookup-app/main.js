@@ -48,6 +48,10 @@ if (ipcPipe) {
       console.warn('[IPC] mpv connection error:', err.message);
       mpvIpc = null;
     });
+    mpvIpc.on('close', () => {
+      console.log('[IPC] mpv connection closed');
+      mpvIpc = null;
+    });
   } catch (e) {
     console.error('[IPC] Failed to connect:', e.message);
   }
@@ -68,7 +72,16 @@ app.whenReady().then(() => {
         if (req.url === '/shutdown') {
           console.log('[IPC] Shutdown signal received');
           res.end('closing');
-          setTimeout(() => app.quit(), 100);
+          
+          if (mpvIpc) {
+            mpvIpc.end();
+            mpvIpc = null;
+          }
+          
+          setTimeout(() => {
+            console.log('[INFO] Quitting app via shutdown signal');
+            app.quit();
+          }, 100);
           return;
         }
 
@@ -119,9 +132,13 @@ app.whenReady().then(() => {
         process.kill(parentPid, 0);
       } catch (e) {
         console.log('[INFO] Parent process died, shutting down...');
+        if (mpvIpc) {
+          mpvIpc.end();
+          mpvIpc = null;
+        }
         app.quit();
       }
-    }, 2000);
+    }, 500); // Check more frequently to release IPC pipe fast
   }
 });
 
