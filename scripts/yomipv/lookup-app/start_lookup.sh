@@ -3,6 +3,7 @@
 # Equivalent to start_lookup.ps1 for Windows
 
 MPV_PID="$1"
+IPC_PIPE="$2"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
@@ -26,8 +27,8 @@ echo "[INFO] Starting Lookup App..." >> "$LOG_FILE"
 STDOUT_LOG="$SCRIPT_DIR/lookup_app_stdout.log"
 STDERR_LOG="$SCRIPT_DIR/lookup_app_stderr.log"
 
-# Launch Lookup App with parent PID monitoring
-"$LOOKUP_APP_BIN" . --parent-pid="$MPV_PID" > "$STDOUT_LOG" 2> "$STDERR_LOG" &
+# Launch Lookup App with parent PID monitoring and IPC pipe
+"$LOOKUP_APP_BIN" . --parent-pid="$MPV_PID" --ipc-pipe="$IPC_PIPE" > "$STDOUT_LOG" 2> "$STDERR_LOG" &
 
 LOOKUP_APP_PID=$!
 

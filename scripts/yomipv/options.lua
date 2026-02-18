@@ -23,6 +23,7 @@ local default_options = {
 	secondary_sentence_field = "sentenceTranslation",
 	expression_audio_field = "wordAudio",
 	sentence_audio_field = "sentenceAudio",
+	selection_text_field = "selectionText",
 	definition_field = "definition",
 	glossary_field = "glossary",
 	image_field = "picture",
@@ -40,15 +41,16 @@ local default_options = {
 	-- sentence_audio_field
 	-- image_field
 	-- miscinfo_field
-	refresh_gui_after_update = true, -- Refresh Anki browser after updating note
+	refresh_gui_after_update = true, -- Refresh Anki browser after note update
 
 	--[[ Yomitan settings ]]
 
 	yomitan_url = "127.0.0.1:19633",
 
-	-- Field handlebars; leave empty to disable
+	-- Field handlebars
+	selection_text_handlebar = "",
 	definition_handlebar = "",
-	glossary_handlebar = "glossary",
+	glossary_handlebar = "",
 
 	-- Highlighting
 	sentence_highlight_tag = '<span class="highlight">', -- HTML tag for selected term
@@ -69,13 +71,12 @@ local default_options = {
 	-- Image template
 	image_template = '<img src="%s" class="yomipv-image">',
 
-	--[[ Misc info settings ]]
+	--- Misc info settings
 
-	-- Format specifiers:
-	-- {name}: Sanitized title (removes episodes and brackets)
-	-- {season}: Season info
-	-- {episode}: Episode info
-	-- {timestamp}: Timestamp (HH:MM:SS)
+	-- {name} Sanitized title
+	-- {season} Season info
+	-- {episode} Episode info
+	-- {timestamp} Timestamp (HH:MM:SS)
 
 	-- Bullet logic (miscinfo_episode_bullet):
 	-- Adapts dynamically to {season} and {episode} presence
@@ -108,13 +109,13 @@ local default_options = {
 	-- Static screenshot settings
 	picture_static_format = "avif", -- Format: jpg, avif, webp
 	picture_static_quality = 85, -- Quality: 1-100
-	picture_static_width = 1080, -- Width (0 to disable scaling)
+	picture_static_width = 1080, -- Width or 0 to disable scaling
 	picture_static_offset = 0.0, -- Offset in seconds relative to subtitle start
 
 	-- Animated picture settings
 	animation_format = "avif", -- Format: webp, avif
 	animation_quality = 50, -- Quality: 1-100
-	animation_width = 720, -- Width (0 to disable scaling)
+	animation_width = 720, -- Width or 0 to disable scaling
 	animation_fps = 10, -- Frames per second
 	animation_duration = "auto", -- Seconds or "auto" to match subtitle duration
 	animation_offset = 0.0, -- Offset in seconds relative to subtitle start

@@ -6,9 +6,9 @@ local StringOps = require("lib.string_ops")
 
 local Interaction = {}
 
--- Trigger lookup based on specific trigger source
+-- Trigger lookup based on trigger source
 local function trigger_lookup_if_enabled(selector, trigger_source)
-	local should_trigger = false
+	local should_trigger
 	if trigger_source == "hover" then
 		should_trigger = selector.style.lookup_on_hover
 	elseif trigger_source == "navigation" then
@@ -30,7 +30,7 @@ local function trigger_lookup_if_enabled(selector, trigger_source)
 	end
 end
 
--- Hide lookup unless about to trigger it (prevents race condition)
+-- Hide lookup unless triggering to prevent race condition
 local function hide_if_needed(selector, trigger_source)
 	local will_trigger_lookup = false
 	if trigger_source == "hover" then
@@ -84,7 +84,7 @@ local function on_right(selector)
 	trigger_lookup_if_enabled(selector, "navigation")
 end
 
--- Find best candidate for vertical navigation (up/down)
+-- Find candidate for vertical navigation
 local function find_vertical_neighbor(selector, direction)
 	local current_boxes = {}
 	for _, box in ipairs(selector.token_boxes) do
@@ -96,7 +96,7 @@ local function find_vertical_neighbor(selector, direction)
 		return nil
 	end
 
-	-- Use first box for UP and last for DOWN if word spans lines
+	-- Use first box for up and last for down if word spans lines
 	local ref_box = direction == "up" and current_boxes[1] or current_boxes[#current_boxes]
 	local ref_x = (ref_box.x1 + ref_box.x2) / 2
 	local ref_y = (ref_box.y1 + ref_box.y2) / 2
@@ -105,8 +105,8 @@ local function find_vertical_neighbor(selector, direction)
 	local min_y_dist = math.huge
 	local min_x_dist = math.huge
 
-	-- Heuristic: find boxes clearly above or below
-	-- 5px buffer to handle small overlaps or rounding
+	-- Find boxes clearly above or below
+	-- 5px buffer for overlaps or rounding
 	for _, box in ipairs(selector.token_boxes) do
 		if not selector.tokens[box.index].is_term or box.index == selector.index then
 			goto continue
@@ -129,7 +129,7 @@ local function find_vertical_neighbor(selector, direction)
 		return nil
 	end
 
-	-- Pick horizontally closest candidate on nearest line (within 20px tolerance)
+	-- Pick horizontally closest candidate on nearest line with 20px tolerance
 	for _, box in ipairs(selector.token_boxes) do
 		if not selector.tokens[box.index].is_term or box.index == selector.index then
 			goto continue

@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const http = require('http');
+const net = require('net');
 
 let mainWindow;
 
@@ -27,10 +28,29 @@ function createWindow() {
   mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   mainWindow.loadFile('index.html');
-  // Disable context menu
   mainWindow.webContents.on('context-menu', (e) => {
     e.preventDefault();
   });
+}
+
+// mpv IPC setup
+const ipcPipeArg = process.argv.find(arg => arg.startsWith('--ipc-pipe='));
+const ipcPipe = ipcPipeArg ? ipcPipeArg.split('=')[1] : null;
+
+let mpvIpc = null;
+if (ipcPipe) {
+  try {
+    console.log('[IPC] Connecting to:', ipcPipe);
+    mpvIpc = net.connect(ipcPipe, () => {
+      console.log('[IPC] Connected to mpv');
+    });
+    mpvIpc.on('error', (err) => {
+      console.warn('[IPC] mpv connection error:', err.message);
+      mpvIpc = null;
+    });
+  } catch (e) {
+    console.error('[IPC] Failed to connect:', e.message);
+  }
 }
 
 app.whenReady().then(() => {
@@ -113,4 +133,24 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('hide-window', () => {
   mainWindow.hide();
+});
+
+ipcMain.on('sync-selection', (event, text) => {
+  console.log('[IPC] sync-selection received:', text);
+  if (mpvIpc) {
+    const cmd = { command: ['script-message', 'yomipv-sync-selection', text] };
+    mpvIpc.write(JSON.stringify(cmd) + '\n');
+  } else {
+    console.warn('[IPC] Cannot sync selection: mpvIpc not connected');
+  }
+});
+
+ipcMain.on('dictionary-selected', (event, content) => {
+  console.log('[IPC] dictionary-selected received');
+  if (mpvIpc) {
+    const cmd = { command: ['script-message', 'yomipv-dictionary-selected', content] };
+    mpvIpc.write(JSON.stringify(cmd) + '\n');
+  } else {
+    console.warn('[IPC] Cannot send dictionary selection: mpvIpc not connected');
+  }
 });

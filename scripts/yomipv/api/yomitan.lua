@@ -138,10 +138,16 @@ function Yomitan:request(endpoint, params, completion_fn)
 	msg.info("Yomitan Request: " .. url)
 
 	local request_json, error = utils.format_json(params)
-	if error ~= nil or request_json == "null" then
-		msg.error("Failed to format JSON for Yomitan request")
+	if error ~= nil then
+		msg.error("Failed to format JSON for Yomitan request: " .. tostring(error))
 		return completion_fn(nil, "JSON error")
 	end
+	if request_json == "null" then
+		msg.error("Failed to format JSON for Yomitan request: result is null")
+		return completion_fn(nil, "JSON error")
+	end
+
+	msg.info("Yomitan API Request JSON: " .. request_json)
 
 	return self.curl.request(url, request_json, function(success, curl_output, error_str)
 		msg.info(string.format("Yomitan Response: %s", endpoint))
@@ -232,6 +238,10 @@ function Yomitan:get_anki_fields(term, markers, context, callback)
 
 	if context then
 		params.context = context
+		-- Add redundant selection key for compatibility with various servers
+		if context.selection then
+			params.context.selectedText = context.selection
+		end
 	end
 
 	local function try_endpoints(endpoints, idx)

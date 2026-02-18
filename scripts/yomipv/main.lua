@@ -132,9 +132,32 @@ local function launch_lookup_app()
 		end
 
 		local mpv_pid = utils.getpid()
+		local ipc_pipe = mp.get_property("input-ipc-server")
+
+		-- Validate IPC pipe for platform
+		local function is_valid_pipe(pipe)
+			if not pipe or pipe == "" then
+				return false
+			end
+			if Platform.IS_WINDOWS then
+				return pipe:match("^\\\\.\\pipe\\")
+			else
+				return pipe:find("/")
+			end
+		end
+
+		if not is_valid_pipe(ipc_pipe) then
+			if Platform.IS_WINDOWS then
+				ipc_pipe = "\\\\.\\pipe\\yomipv-" .. mpv_pid
+			else
+				ipc_pipe = "/tmp/yomipv-" .. mpv_pid
+			end
+			mp.set_property("input-ipc-server", ipc_pipe)
+		end
+
 		Player.notify("Yomipv: Starting lookup app...", "info")
 
-		Platform.launch_electron_app(app_path, mpv_pid, function(launch_success, _launch_result, launch_error)
+		Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, function(launch_success, _launch_result, launch_error)
 			if not launch_success then
 				msg.error("Failed to launch lookup app: " .. tostring(launch_error))
 			else
@@ -148,6 +171,11 @@ launch_lookup_app()
 
 -- Register key bindings
 mp.add_key_binding(config.key_open_selector, "yomipv-export", function()
+	msg.info("Key pressed: " .. config.key_open_selector)
+	if not handler then
+		msg.error("Handler not initialized!")
+		return
+	end
 	handler:start_export(history)
 end)
 
@@ -165,6 +193,16 @@ if config.selector_show_history then
 		end
 	end)
 end
+
+mp.register_script_message("yomipv-sync-selection", function(text)
+	msg.info("Received selection sync: " .. tostring(text))
+	handler:sync_selection(text)
+end)
+
+mp.register_script_message("yomipv-dictionary-selected", function(text)
+	msg.info("Received dictionary selection")
+	handler:set_selected_dictionary(text)
+end)
 
 msg.info("Yomipv v" .. yomipv_version .. ": Initialized")
 Player.notify("Yomipv v" .. yomipv_version .. " loaded", "success", 2)

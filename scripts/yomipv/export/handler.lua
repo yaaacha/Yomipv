@@ -127,6 +127,7 @@ local function merge_raw_content(existing, new_content, direction)
 end
 -- Entry points
 function Handler:start_export(gui)
+	msg.info("Handler:start_export called")
 	local was_paused = mp.get_property_native("pause")
 	mp.set_property_native("pause", true) -- Pauses video immediately
 
@@ -225,9 +226,10 @@ function Handler:initialize_export_context(gui)
 		self.deps.history:open("open")
 	end
 
+	local primary_sid = sub.primary_sid or ""
 	local hex_dump = ""
-	for i = 1, math.min(#sub.primary_sid, 20) do
-		hex_dump = hex_dump .. string.format("%02X ", sub.primary_sid:byte(i))
+	for i = 1, math.min(#primary_sid, 20) do
+		hex_dump = hex_dump .. string.format("%02X ", primary_sid:byte(i))
 	end
 	msg.info("Cleaned sub hex: " .. hex_dump)
 
@@ -324,8 +326,17 @@ function Handler:handle_selector_result(context, selected_token)
 
 	local yomitan_fields = self:build_yomitan_fields()
 
+	msg.info(
+		string.format(
+			"Calling get_anki_fields for '%s' with selection: '%s'",
+			selected_token.text,
+			tostring(self.last_selection)
+		)
+	)
+
 	self.deps.yomitan:get_anki_fields(selected_token.text, yomitan_fields, {
 		text = context.current_subtitle_text,
+		selection = self.last_selection,
 		start = selected_token.offset,
 		["end"] = selected_token.offset + selected_token.text:len(),
 	}, function(data, error)
@@ -345,6 +356,19 @@ function Handler:handle_anki_fields_result(context, selected_token, data, error)
 		msg.warn("No dictionary entry for " .. selected_token.text)
 		return Player.notify("Error: No dictionary entry.", "warn", 2)
 	end
+
+	-- Manually inject selection if marker is missing or empty but we have a selection
+	if self.last_selection and (not entry["popup-selection-text"] or entry["popup-selection-text"] == "") then
+		msg.info("Manually injecting selection into popup-selection-text marker")
+		entry["popup-selection-text"] = self.last_selection
+	end
+
+	-- Log available markers in the entry for verification
+	local markers_found = {}
+	for k, _ in pairs(entry) do
+		table.insert(markers_found, k)
+	end
+	msg.info("Available Yomitan markers in entry: " .. table.concat(markers_found, ", "))
 
 	Player.notify("Yomitan: Capturing media...")
 	self.deps.anki:get_media_path(function(media_dir, media_err)
@@ -432,6 +456,13 @@ end
 
 -- Finalize note field values and persist to Anki
 function Handler:finalize_and_save_note(context, note_fields, entry, data)
+	-- Inject selected dictionary if available
+	if self.selected_dictionary then
+		entry["selected-dict"] = self.selected_dictionary
+		-- Disable manual selection text when a dictionary is selected
+		entry["popup-selection-text"] = nil
+	end
+
 	self:apply_yomitan_fields(note_fields, entry)
 
 	Player.notify("Yomitan: Saving media...")
@@ -461,35 +492,49 @@ function Handler:apply_yomitan_fields(note_fields, entry)
 		set_field(self.config.dictionary_pref_field, self.config.dictionary_pref_value)
 	end
 
-	-- Combine multiple definition handlebars
-	local definition_handlebars = parse_handlebars(self.config.definition_handlebar)
-	if #definition_handlebars > 0 then
-		local combined_definition = ""
-		for _, handlebar in ipairs(definition_handlebars) do
-			local value = get_field_value(entry, handlebar)
-			if value and value ~= "" then
-				combined_definition = combined_definition .. value
+	-- Helper for processing handlebars with priority logic
+	local function process_handlebars(field_config, target_field)
+		local handlebars = parse_handlebars(field_config)
+		if #handlebars == 0 then
+			return
+		end
+
+		local combined_value = ""
+		local selected_dict_content = get_field_value(entry, "selected-dict")
+		local use_priority = false
+
+		-- Check priority
+		for _, handlebar in ipairs(handlebars) do
+			if
+				(handlebar == "selected-dict" or handlebar == "selected-text")
+				and selected_dict_content
+				and selected_dict_content ~= ""
+			then
+				use_priority = true
+				combined_value = selected_dict_content
+				break
 			end
 		end
-		if combined_definition ~= "" then
-			set_field(self.config.definition_field, combined_definition)
+
+		-- Fallback
+		if not use_priority then
+			for _, handlebar in ipairs(handlebars) do
+				local value = get_field_value(entry, handlebar)
+				if value and value ~= "" then
+					combined_value = combined_value .. value
+				end
+			end
+		end
+
+		if combined_value ~= "" then
+			set_field(target_field, combined_value)
 		end
 	end
 
-	-- Combine multiple glossary handlebars
-	local glossary_handlebars = parse_handlebars(self.config.glossary_handlebar)
-	if #glossary_handlebars > 0 then
-		local combined_glossary = ""
-		for _, handlebar in ipairs(glossary_handlebars) do
-			local value = get_field_value(entry, handlebar)
-			if value and value ~= "" then
-				combined_glossary = combined_glossary .. value
-			end
-		end
-		if combined_glossary ~= "" then
-			set_field(self.config.glossary_field, combined_glossary)
-		end
-	end
+	-- Apply definition and glossary fields using the helper
+	process_handlebars(self.config.definition_handlebar, self.config.definition_field)
+	process_handlebars(self.config.glossary_handlebar, self.config.glossary_field)
+	process_handlebars(self.config.selection_text_handlebar, self.config.selection_text_field)
 
 	if entry.audio and not Collections.is_void(self.config.expression_audio_field) then
 		note_fields[self.config.expression_audio_field] = entry.audio
@@ -669,6 +714,8 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 			end
 		end,
 		on_lookup = function(data)
+			-- Reset selected dictionary on new lookup
+			self.selected_dictionary = nil
 			local json_body = require("mp.utils").format_json(data)
 			-- Use direct subprocess for reliability with explicit UTF-8 header
 			mp.command_native_async({
@@ -712,17 +759,29 @@ end
 -- Build array of field names for retrieval
 function Handler:build_yomitan_fields()
 	local fields = Collections.duplicate(DEFAULT_YOMITAN_FIELDS)
+	local client_side_handlebars = { ["selected-dict"] = true }
 
 	-- Add all definition handlebars
 	local definition_handlebars = parse_handlebars(self.config.definition_handlebar)
 	for _, handlebar in ipairs(definition_handlebars) do
-		table.insert(fields, handlebar)
+		if not client_side_handlebars[handlebar] then
+			table.insert(fields, handlebar)
+		end
 	end
 
-	-- Add all glossary handlebars
 	local glossary_handlebars = parse_handlebars(self.config.glossary_handlebar)
 	for _, handlebar in ipairs(glossary_handlebars) do
-		table.insert(fields, handlebar)
+		if not client_side_handlebars[handlebar] then
+			table.insert(fields, handlebar)
+		end
+	end
+
+	-- Add all selection text handlebars
+	local selection_handlebars = parse_handlebars(self.config.selection_text_handlebar)
+	for _, handlebar in ipairs(selection_handlebars) do
+		if not client_side_handlebars[handlebar] then
+			table.insert(fields, handlebar)
+		end
 	end
 
 	return fields
@@ -781,19 +840,29 @@ function Handler:change_fields(note_ids, new_data)
 	end
 end
 
--- Creates new Handler instance
+function Handler:set_selected_dictionary(text)
+	self.selected_dictionary = text
+	msg.info("Handler: Selected dictionary updated")
+end
+
+-- Initialize Handler instance
 function Handler:new()
 	local obj = {
 		config = nil,
 		deps = nil,
 		expand_to_subtitle = nil,
+		last_selection = nil,
 	}
 	setmetatable(obj, self)
 	self.__index = self
 	return obj
 end
 
--- Final note addition to Anki
+function Handler:sync_selection(text)
+	self.last_selection = text ~= "" and text or nil
+end
+
+-- Add final note to Anki
 function Handler:perform_anki_save(_context, note_fields)
 	Player.notify("Yomitan: Saving to Anki...")
 
@@ -820,7 +889,7 @@ function Handler:perform_anki_save(_context, note_fields)
 	)
 end
 
--- Handles duplicate note by updating if configured
+-- Handle duplicate note by updating
 function Handler:handle_duplicate_note(note_fields, _error_msg)
 	local expression = note_fields[self.config.expression_field]
 	if not expression then
@@ -836,7 +905,7 @@ function Handler:handle_duplicate_note(note_fields, _error_msg)
 	end)
 end
 
--- Notifies user on finish
+-- Notify user on completion
 function Handler:notify_user_on_finish(note_ids)
 	Player.notify("Updated " .. #note_ids .. " note(s)", "success", 2)
 
@@ -845,7 +914,7 @@ function Handler:notify_user_on_finish(note_ids)
 		local first_nid = note_ids[1]
 		local query = "nid:" .. tostring(first_nid)
 
-		-- Browse to note to ensure visibility
+		-- Browse to note for visibility
 		self.deps.anki:gui_browse(query, function()
 			-- Select explicitly to refresh editor pane
 			self.deps.anki:gui_select_note(first_nid, function() end)

@@ -78,7 +78,7 @@ function Platform.normalize_path(path)
 end
 
 -- Launch Electron app with platform-specific launcher
-function Platform.launch_electron_app(app_path, mpv_pid, callback)
+function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
 	local normalized_path = Platform.normalize_path(app_path)
 
 	if Platform.IS_WINDOWS then
@@ -94,6 +94,8 @@ function Platform.launch_electron_app(app_path, mpv_pid, callback)
 			start_ps1,
 			"-mpvPid",
 			tostring(mpv_pid),
+			"-ipcPipe",
+			ipc_pipe or "",
 		}
 
 		msg.info("Starting lookup app via PowerShell for PID: " .. tostring(mpv_pid))
@@ -119,6 +121,7 @@ function Platform.launch_electron_app(app_path, mpv_pid, callback)
 				"/bin/bash",
 				start_sh,
 				tostring(mpv_pid),
+				ipc_pipe or "",
 			}
 
 			msg.info("Starting lookup app via bash for PID: " .. tostring(mpv_pid))

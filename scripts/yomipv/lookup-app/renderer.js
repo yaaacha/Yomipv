@@ -6,7 +6,7 @@ const headerEl = document.getElementById('term-header');
 ipcRenderer.on('lookup-term', async (event, data) => {
   console.log('[IPC] Received lookup data:', JSON.stringify(data));
 
-  // Header rendering helper
+  // Render header components
   const renderHeader = (term, readingHtml) => {
     const cleanTerm = (term || '').trim();
     
@@ -30,17 +30,17 @@ ipcRenderer.on('lookup-term', async (event, data) => {
     }
   };
 
-  // Initial header update with available data
+  // Initial header update
   renderHeader(data.term, data.reading);
 
-  // Loading state display
+  // Show loading state
   glossaryEl.innerHTML = '<div class="loading">Looking up...</div>';
 
   try {
-    // Yomitan API request
+    // Fetch from Yomitan API
     console.log('Sending request for:', data.term);
     
-    // Iterate through API endpoints
+    // Iterate through available API endpoints
     let result;
     const endpoints = [`http://127.0.0.1:19633/ankiFields`, `http://127.0.0.1:19633/api/ankiFields`];
     
@@ -79,10 +79,10 @@ ipcRenderer.on('lookup-term', async (event, data) => {
     const fields = entries ? (Array.isArray(entries) ? entries[0] : entries) : null;
 
     if (fields && (fields.glossary || fields.definition)) {
-      // Use accurate reading from API results if available
+      // Use reading from API results if available
       const term = fields.expression || data.term;
       
-      // Prioritize pitch accents (first item) as reading
+      // Use first pitch accent as reading
       let reading = fields.reading || data.reading;
       const pitchAccents = fields['pitch-accents'] || '';
       
@@ -98,7 +98,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
 
       renderHeader(term, reading);
 
-      // Pitch accent coloring logic
+      // Apply pitch accent colors
       const pitchTarget = fields['pitch-accent-categories'] || '';
       console.log(`[UI] Pitch accent categories: "${pitchTarget}"`);
       
@@ -110,7 +110,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
         'kifuku': 'var(--pitch-purple)'
       };
 
-      // Extract first matching category from list
+      // Extract first matching category
       const firstPitch = pitchTarget.split(/[\s,]+/).find(p => pitchColors[p.toLowerCase()]);
       
       if (firstPitch) {
@@ -126,10 +126,10 @@ ipcRenderer.on('lookup-term', async (event, data) => {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = content;
       
-      // Remove all images
+      // Remove images
       tempDiv.querySelectorAll('img').forEach(img => img.remove());
       
-      // Join Jitendex glossary entries while preserving sense structure
+      // Join Jitendex entries while preserving sense structure
       tempDiv.querySelectorAll('[data-dictionary*="Jitendex"]').forEach(dictEl => {
         dictEl.querySelectorAll('[data-sc-content="glossary"]').forEach(glossaryEl => {
           const children = Array.from(glossaryEl.childNodes);
@@ -140,7 +140,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
             const isElement = node.nodeType === Node.ELEMENT_NODE && !node.matches('span[data-details]');
             
             if (isText || isElement) {
-              // Strip sense markers (①-⑳) from start of node
+              // Strip sense markers from node start
               let text = node.textContent;
               if (text.match(/^[①-⑳]/)) {
                 text = text.replace(/^[①-⑳]\s*/, '');
@@ -158,7 +158,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
           });
         });
 
-        // Neutralize Jitendex list styles
+        // Reset Jitendex list styles
         dictEl.querySelectorAll('li').forEach(li => {
           li.style.listStyle = 'none';
         });
@@ -166,7 +166,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
 
       glossaryEl.innerHTML = tempDiv.innerHTML;
 
-      // Disable links
+      // Disable links and pointer events
       glossaryEl.querySelectorAll('a, [data-link]').forEach(el => {
         el.onclick = (e) => e.preventDefault();
         el.style.pointerEvents = 'none';
@@ -183,8 +183,89 @@ ipcRenderer.on('lookup-term', async (event, data) => {
     } else {
       glossaryEl.innerHTML = `No result found for "${data.term}".`;
     }
+
+    // Add selection listeners to dictionary titles
+    glossaryEl.querySelectorAll('[data-dictionary]').forEach(el => {
+      const titleEl = el.firstElementChild;
+      if (titleEl) {
+        titleEl.style.cursor = 'pointer';
+        
+        titleEl.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent event bubbling
+
+          // Clear previous selections
+
+          // Apply selection style
+          titleEl.classList.add('selected');
+          
+          // Extract dictionary content
+          const dictionaryHtml = el.outerHTML;
+          let styleHtml = '';
+          const styleEl = glossaryEl.querySelector('style');
+          if (styleEl) {
+            styleHtml = styleEl.outerHTML;
+          }
+          
+          // Reconstruct glossary structure for single dictionary
+          const dictContent = `<div class="yomitan-glossary" style="text-align: left;"><ol>${dictionaryHtml}</ol></div>${styleHtml}`;
+          console.log('[UI] Dictionary selected:', el.getAttribute('data-dictionary'));
+          
+          // Sync state to main process
+          ipcRenderer.send('dictionary-selected', dictContent);
+        });
+      }
+    });
   } catch (e) {
     console.error('Lookup failed', e);
     glossaryEl.innerHTML = `Error fetching from Yomitan: ${e.message}`;
+  }
+});
+
+// Sync text selection to main process
+document.addEventListener('selectionchange', () => {
+  let selection = window.getSelection().toString().trim();
+  // Convert newlines to <br> tags
+  selection = selection.replace(/\r?\n/g, '<br>');
+  console.log('[UI] selectionchange:', selection);
+  ipcRenderer.send('sync-selection', selection);
+});
+
+// Bold text selection on mouseup
+document.addEventListener('mouseup', () => {
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0 && !selection.isCollapsed) {
+    const range = selection.getRangeAt(0);
+    const startRuby = range.startContainer.parentElement?.closest('ruby');
+    const endRuby = range.endContainer.parentElement?.closest('ruby');
+
+    if (startRuby || endRuby) {
+      console.log('[UI] Ruby detected in selection, expanding...');
+      if (startRuby) range.setStartBefore(startRuby);
+      if (endRuby) range.setEndAfter(endRuby);
+      
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    document.designMode = 'on';
+    document.execCommand('bold', false, null);
+    document.designMode = 'off';
+
+    // Update the main process with the modified HTML
+    const selectedTitle = glossaryEl.querySelector('[data-dictionary] > .selected');
+    if (selectedTitle) {
+      const dictEl = selectedTitle.parentElement;
+      const dictionaryHtml = dictEl.outerHTML;
+      
+      let styleHtml = '';
+      const styleEl = glossaryEl.querySelector('style');
+      if (styleEl) {
+        styleHtml = styleEl.outerHTML;
+      }
+      
+      const dictContent = `<div class="yomitan-glossary" style="text-align: left;"><ol>${dictionaryHtml}</ol></div>${styleHtml}`;
+      console.log('[UI] Updating selected dictionary with bold text');
+      ipcRenderer.send('dictionary-selected', dictContent);
+    }
   }
 });

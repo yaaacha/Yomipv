@@ -38,7 +38,8 @@ function AnkiConnect:request(action, params, callback)
 	end
 
 	local json_body = utils.format_json(request_body):gsub('"params":%s*%[%s*%]', '"params":{}')
-	msg.info(string.format("AnkiConnect request: %s, callback type: %s", action, type(callback)))
+	msg.info(string.format("AnkiConnect request: %s", action))
+	msg.info("AnkiConnect request body: " .. json_body)
 
 	self.curl.request(self.url, json_body, function(_, curl_output, _error_str)
 		if type(callback) ~= "function" then
