@@ -241,6 +241,12 @@ function Monitor.clear()
 	Monitor.appending = false
 end
 
+-- Clear history entries
+function Monitor.clear_history()
+	Monitor.history = {}
+	msg.info("History cleared")
+end
+
 -- Append to recording
 function Monitor.append_recorded(subtitle)
 	if not Monitor.appending or not subtitle.primary_sid or subtitle.primary_sid == "" then

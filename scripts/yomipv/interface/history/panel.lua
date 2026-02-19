@@ -79,6 +79,10 @@ function History:handle_click()
 	local mx, my = mp.get_mouse_pos()
 	for _, box in ipairs(self.hit_boxes) do
 		if mx >= box.x1 and mx <= box.x2 and my >= box.y1 and my <= box.y2 then
+			if box.id == "clear" then
+				self:clear_history()
+				return true
+			end
 			if box.entry then
 				if self.exporter_handler and self.exporter_handler.expand_to_subtitle then
 					self.exporter_handler:expand_to_subtitle(box.entry)
@@ -91,6 +95,12 @@ function History:handle_click()
 		end
 	end
 	return false
+end
+
+function History:clear_history()
+	Monitor.clear_history()
+	Player.notify("History cleared", "info", 2)
+	self:update(true)
 end
 
 function History:update(force)
@@ -150,6 +160,9 @@ function History:open(request_state)
 		self.auto_scroll = (self.scroll_top_index == max_idx)
 		self:update()
 	end)
+	mp.add_forced_key_binding("x", "menu-clear-history", function()
+		self:clear_history()
+	end)
 
 	self.auto_scroll = true
 	self.scroll_top_index = self.scroll_top_index or 1
@@ -194,6 +207,7 @@ function History:close()
 	mp.remove_key_binding("menu-hover-test")
 	mp.remove_key_binding("menu-scroll-up")
 	mp.remove_key_binding("menu-scroll-down")
+	mp.remove_key_binding("menu-clear-history")
 	if self._sub_observer then
 		mp.unobserve_property(self._sub_observer)
 		self._sub_observer = nil

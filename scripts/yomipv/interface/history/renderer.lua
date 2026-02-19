@@ -326,6 +326,21 @@ function Renderer.draw(state, osd, scale, ow, oh)
 		:color("ffffff")
 		:bold(header_text)
 
+	-- Draw Clear button
+	osd:new_event()
+		:pos(x2 - 10 * scale, y1 + 16 * scale, true, 6)
+		:size((state.config.history_font_size or 15) + 3 * scale)
+		:color(state.hovered_id == "clear" and "ffffff" or "CCCCCC")
+		:bold("CLEAR")
+
+	table.insert(state.hit_boxes, {
+		id = "clear",
+		x1 = x2 - 60 * scale,
+		y1 = y1,
+		x2 = x2,
+		y2 = y1 + header_h,
+	})
+
 	-- Scrollbar
 	if #entries > #entries_to_draw or state.scroll_top_index > 1 then
 		local sb_w = 4 * scale
