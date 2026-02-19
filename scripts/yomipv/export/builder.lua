@@ -7,7 +7,6 @@ local Collections = require("lib.collections")
 
 local Builder = {}
 
--- Create new builder instance
 function Builder.new(config)
 	local obj = {
 		config = config,
@@ -17,7 +16,6 @@ function Builder.new(config)
 	return obj
 end
 
--- Construct base note fields with media assets
 function Builder:construct_note_fields(secondary_subtitle, picture_file, audio_file)
 	local fields = {}
 
@@ -41,7 +39,6 @@ function Builder:construct_note_fields(secondary_subtitle, picture_file, audio_f
 	return fields
 end
 
--- Generate formatted metadata field
 function Builder:generate_miscinfo()
 	local title = mp.get_property("media-title", "")
 	local path = mp.get_property("path", "")
@@ -52,6 +49,7 @@ function Builder:generate_miscinfo()
 
 	local season_str = ""
 	local episode_str = ""
+	-- Use bullet for episode index and comma separator between components
 	local bullet = self.config.miscinfo_episode_bullet and " • " or " "
 
 	if season_num and (tonumber(season_num) > 1 or self.config.miscinfo_show_season_one) then
@@ -62,7 +60,6 @@ function Builder:generate_miscinfo()
 		episode_str = self.config.miscinfo_episode_label .. " " .. tonumber(episode_num)
 	end
 
-	-- Apply bullet and separator logic
 	if season_str ~= "" and episode_str ~= "" then
 		season_str = bullet .. season_str .. ", "
 		-- episode_str stays as is
@@ -74,26 +71,18 @@ function Builder:generate_miscinfo()
 
 	local format = self.config.miscinfo_format
 
-	-- Replace placeholders
 	format = format:gsub("{name}", sanitized_title)
 	format = format:gsub("{season}", season_str)
 	format = format:gsub("{episode}", episode_str)
 	format = format:gsub("{timestamp}", timestamp)
 
-	-- Fallback for legacy format specifiers (deprecate gracefully?)
-	-- Users might still have old config, so maybe mapping them is safer for now?
-	-- For this task I will strictly follow the new requirement.
-	-- If user asks for legacy support I can add it, but requirement said "I want to rework this".
-
 	return string.format(self.config.miscinfo_wrapper, format)
 end
 
--- Sanitize title (remove episode tags and brackets)
 function Builder._sanitize_title(title, path)
 	return StringOps.clean_title(title, path)
 end
 
--- Parse season and episode indices from title or path
 function Builder._parse_season_episode(title, path)
 	local source = title or path or ""
 	local season, episode
@@ -111,18 +100,11 @@ function Builder._parse_season_episode(title, path)
 	return season, episode
 end
 
--- Format current playback position timestamp
 function Builder:format_timestamp()
 	local time_pos = mp.get_property_number("time-pos", 0)
 	return StringOps.format_duration(time_pos, self.config.miscinfo_show_ms)
 end
 
--- Define extraction safety buffer duration
-function Builder._safety_buffer(_)
-	return 0.1
-end
-
--- Merge new data into existing note fields
 function Builder:_make_new_note_data(existing_fields, new_data)
 	local result = {}
 

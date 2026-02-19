@@ -27,8 +27,7 @@ local DEFAULT_YOMITAN_FIELDS = {
 
 local EXPANSION_TIMEOUT = 0.05
 
--- Parse multiple handlebar names from config string
--- Supports: {h1}{h2} or h1,h2
+-- Support both bracketed {h1} and comma-separated h1,h2 formats
 local function parse_handlebars(handlebar_string)
 	if not handlebar_string or handlebar_string == "" then
 		return {}
@@ -59,7 +58,6 @@ local function get_field_value(entry, field_name)
 	return entry[field_name]
 end
 
--- Split context sentence for cloze highlighting
 local function split_cloze(context, target, surface, offset)
 	local start_idx, end_idx
 
@@ -87,12 +85,12 @@ end
 
 local function format_sentence_html(self, prefix, body, suffix, tag)
 	local closing_tag = tag:match("<(%w+)")
+	-- Extract tag name to properly close wrap (e.g. <b> -> </b>)
 	closing_tag = closing_tag and ("</" .. closing_tag .. ">") or "</span>"
 	local content = string.format("%s%s%s%s%s", prefix or "", tag or "", body or "", closing_tag, suffix or "")
 	return string.format(self.config.primary_sentence_wrapper, content)
 end
 
--- Merge raw subtitle content for expansion
 local function merge_raw_content(existing, new_content, direction)
 	if not existing then
 		return new_content
@@ -152,6 +150,7 @@ function Handler:toggle_mark_range()
 	end
 end
 
+-- Load and clean subtitle context from session tracker
 function Handler:initialize_export_context(gui)
 	Player.notify("Yomitan: Initializing...")
 	msg.info("Starting Yomitan export flow")
@@ -277,6 +276,7 @@ function Handler:open_selector(context, tokens, was_paused)
 	msg.info("Starting selector with " .. #tokens .. " tokens")
 	Player.notify("Yomitan: Select word...")
 
+	-- Navigation callback for expanding range via UI
 	local update_range_fn = function(direction)
 		self:update_range_async(context, direction)
 	end
@@ -340,6 +340,7 @@ function Handler:handle_anki_fields_result(context, selected_token, data, error)
 		return Player.notify("Error: No dictionary entry.", "warn", 2)
 	end
 
+	-- Inject selection if Yomitan doesn't provide it automatically
 	if self.last_selection and (not entry["popup-selection-text"] or entry["popup-selection-text"] == "") then
 		msg.info("Manually injecting selection into popup-selection-text marker")
 		entry["popup-selection-text"] = self.last_selection
@@ -360,7 +361,7 @@ function Handler:handle_anki_fields_result(context, selected_token, data, error)
 
 		self.deps.media.set_output_dir(media_dir)
 		local picture = self.deps.media.picture.create_job(context.sub)
-		local audio = self.deps.media.audio.create_job(context.sub, self.deps.builder:_safety_buffer())
+		local audio = self.deps.media.audio.create_job(context.sub)
 
 		self:capture_media(context, entry, data, picture, audio, selected_token)
 	end)
@@ -411,6 +412,7 @@ function Handler:process_note_content(context, entry, data, picture, audio, sele
 			split_cloze(context.sub.primary_sid, entry.expression, selected_token.text, selected_token.offset)
 	end
 
+	-- Generate fallback cloze highlighting if Yomitan fields are empty
 	if not Collections.is_void(self.config.sentence_field) then
 		note_fields[self.config.sentence_field] =
 			format_sentence_html(self, cloze_prefix, cloze_body, cloze_suffix, self.config.sentence_highlight_tag)
@@ -422,6 +424,7 @@ function Handler:process_note_content(context, entry, data, picture, audio, sele
 	if Collections.is_void(furigana_key) then
 		self:finalize_and_save_note(context, note_fields, entry, data)
 	elseif context.expansion_occurred or Collections.is_void(sentence_furigana) then
+		-- Fetch furigana directly if expansion occurred to ensure context consistency
 		self.deps.yomitan:get_sentence_furigana(context.current_subtitle_text, function(furigana_html)
 			note_fields[furigana_key] = string.format(self.config.primary_sentence_wrapper, furigana_html or "")
 			self:finalize_and_save_note(context, note_fields, entry, data)
@@ -432,12 +435,10 @@ function Handler:process_note_content(context, entry, data, picture, audio, sele
 	end
 end
 
--- Finalize note field values and persist to Anki
 function Handler:finalize_and_save_note(context, note_fields, entry, data)
-	-- Inject selected dictionary if available
+	-- Preference selected dictionary to manual selections
 	if self.selected_dictionary then
 		entry["selected-dict"] = self.selected_dictionary
-		-- Disable manual selection text when a dictionary is selected
 		entry["popup-selection-text"] = nil
 	end
 
@@ -449,7 +450,6 @@ function Handler:finalize_and_save_note(context, note_fields, entry, data)
 	end)
 end
 
--- Map Yomitan fields to target Anki fields based on configuration
 function Handler:apply_yomitan_fields(note_fields, entry)
 	local function set_field(config_key, value)
 		if not Collections.is_void(config_key) then
@@ -470,7 +470,7 @@ function Handler:apply_yomitan_fields(note_fields, entry)
 		set_field(self.config.dictionary_pref_field, self.config.dictionary_pref_value)
 	end
 
-	-- Helper for processing handlebars with priority logic
+	-- Handlebar processing with user preference priority logic
 	local function process_handlebars(field_config, target_field)
 		local handlebars = parse_handlebars(field_config)
 		if #handlebars == 0 then
@@ -522,13 +522,12 @@ end
 -- Perform the final save to Anki
 
 -- Async and expansion helpers
--- Expand selection to include target subtitle context
 function Handler:expand_to_subtitle_method(context, target_subtitle)
 	if not target_subtitle or not target_subtitle.start then
 		return
 	end
 
-	-- Jumps to time if selector is inactive
+	-- Handle seek if selector is not active
 	if not self.deps.selector.active then
 		if target_subtitle.start >= 0 then
 			mp.set_property_number("time-pos", target_subtitle.start)
@@ -573,7 +572,6 @@ function Handler:expand_to_subtitle_method(context, target_subtitle)
 	end
 end
 
--- Update token range asynchronously in specified direction
 function Handler:update_range_async(context, direction, completion_callback)
 	if not self.deps.selector.active or self.is_expanding then
 		return
@@ -582,7 +580,7 @@ function Handler:update_range_async(context, direction, completion_callback)
 	self.is_expanding = true
 	local target = direction < 0 and context.first_subtitle or context.last_subtitle
 
-	-- Wrapper to clear lock before calling completion
+	-- Lock expansion to prevent race conditions from rapid input
 	local function done()
 		self.is_expanding = false
 		if completion_callback then
@@ -614,6 +612,7 @@ function Handler:update_range_async(context, direction, completion_callback)
 				local cleaned_adjacent_sid = StringOps.clean_subtitle(adjacent_subtitle.primary_sid)
 				local cleaned_adjacent_secondary_sid = StringOps.clean_subtitle(adjacent_subtitle.secondary_sid)
 
+				-- Shift indices when prepending to maintain relative alignment
 				if direction < 0 then
 					context.first_subtitle = adjacent_subtitle
 					local shift = #cleaned_adjacent_sid + 1
@@ -644,8 +643,7 @@ function Handler:update_range_async(context, direction, completion_callback)
 		)
 	end)
 end
--- Builders and utilities
--- Build configuration style for selector UI
+
 function Handler:build_selector_style(update_range_fn, was_paused)
 	return {
 		font_size = self.config.selector_font_size,
@@ -734,9 +732,9 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 	}
 end
 
--- Build array of field names for retrieval
 function Handler:build_yomitan_fields()
 	local fields = Collections.duplicate(DEFAULT_YOMITAN_FIELDS)
+	-- Handle client-side handlebars
 	local client_side_handlebars = { ["selected-dict"] = true }
 
 	-- Add all definition handlebars
@@ -823,7 +821,6 @@ function Handler:set_selected_dictionary(text)
 	msg.info("Handler: Selected dictionary updated")
 end
 
--- Initialize Handler instance
 function Handler:new()
 	local obj = {
 		config = nil,
@@ -840,7 +837,6 @@ function Handler:sync_selection(text)
 	self.last_selection = text ~= "" and text or nil
 end
 
--- Add final note to Anki
 function Handler:perform_anki_save(_context, note_fields)
 	Player.notify("Yomitan: Saving to Anki...")
 
@@ -867,7 +863,6 @@ function Handler:perform_anki_save(_context, note_fields)
 	)
 end
 
--- Handle duplicate note by updating
 function Handler:handle_duplicate_note(note_fields, _error_msg)
 	local expression = note_fields[self.config.expression_field]
 	if not expression then
@@ -883,18 +878,14 @@ function Handler:handle_duplicate_note(note_fields, _error_msg)
 	end)
 end
 
--- Notify user on completion
 function Handler:notify_user_on_finish(note_ids)
 	Player.notify("Updated " .. #note_ids .. " note(s)", "success", 2)
 
 	if self.config.refresh_gui_after_update and note_ids and #note_ids > 0 then
-		-- Select single note to prevent UI instability
 		local first_nid = note_ids[1]
 		local query = "nid:" .. tostring(first_nid)
 
-		-- Browse to note for visibility
 		self.deps.anki:gui_browse(query, function()
-			-- Select explicitly to refresh editor pane
 			self.deps.anki:gui_select_note(first_nid, function() end)
 		end)
 	end

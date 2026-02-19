@@ -12,17 +12,14 @@ local Picture = {
 	config = nil,
 }
 
--- Define job output directory
 function Picture.set_output_dir(dir)
 	Picture.output_dir = dir
 end
 
--- Initialize module with configuration
 function Picture.init(config)
 	Picture.config = config
 end
 
--- Construct extraction job from subtitle data
 function Picture.create_job(subtitle)
 	if not Picture.config or not Picture.output_dir then
 		msg.error("Picture module not initialized")
@@ -31,9 +28,8 @@ function Picture.create_job(subtitle)
 
 	local timestamp, duration
 	if Picture.config.picture_animated then
-		-- Animated capture logic
 		local offset = Picture.config.animation_offset or 0
-		timestamp = (subtitle.start or 0) + offset
+		timestamp = (subtitle.start or 0) + offset + 0.1
 
 		if Picture.config.animation_duration == "auto" and subtitle.start and subtitle["end"] then
 			duration = math.max(0.1, subtitle["end"] - subtitle.start)
@@ -41,15 +37,14 @@ function Picture.create_job(subtitle)
 			duration = tonumber(Picture.config.animation_duration) or 2.0
 		end
 	else
-		-- Static capture logic
 		local offset = Picture.config.picture_static_offset or 0
 		if Picture.config.picture_timestamp_source == "current_position" then
 			timestamp = mp.get_property_number("time-pos", 0)
 		else
-			-- Add 0.05s safety buffer to avoid edge-bleeding from previous subtitle frames
+			-- Offset by 0.1s to ensure text rendering and avoid previous subtitle bleeding
 			timestamp = (subtitle.start or 0) + offset + 0.1
 		end
-		duration = 0 -- Not used for static frames, but kept for clarity
+		duration = 0
 	end
 
 	local format = Picture.config.picture_animated and Picture.config.animation_format

@@ -13,31 +13,22 @@ local Audio = {
 	config = nil,
 }
 
--- Set output directory for audio files
 function Audio.set_output_dir(dir)
 	Audio.output_dir = dir
 end
 
--- Initialize audio module with configuration
 function Audio.init(config)
 	Audio.config = config
 end
 
--- Create audio extraction job object
-function Audio.create_job(subtitle, safety_buffer)
+function Audio.create_job(subtitle)
 	if not Audio.config or not Audio.output_dir then
 		msg.error("Audio module not initialized")
 		return nil
 	end
 
-	safety_buffer = safety_buffer or 0.1
-
-	local start_time = (subtitle.start or 0) - safety_buffer
-	local end_time = (subtitle["end"] or 0) + safety_buffer
-
-	if start_time < 0 then
-		start_time = 0
-	end
+	local start_time = subtitle.start or 0
+	local end_time = subtitle["end"] or 0
 
 	local source = mp.get_property("path", "")
 	if not source or source == "" then
@@ -65,6 +56,7 @@ function Audio.create_job(subtitle, safety_buffer)
 		msg.info("Starting audio extraction: " .. target_file)
 
 		local args
+		-- Use FFmpeg for local files if configured; fallback to MPV encoder for remotes
 		if Audio.config.audio_use_ffmpeg and not MediaUtils.is_remote_path(source) then
 			args = FFmpegEncoder.generate_audio_args(Audio.config, source, target_file, start_time, end_time)
 		else

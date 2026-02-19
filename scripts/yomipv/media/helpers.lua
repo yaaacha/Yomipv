@@ -1,5 +1,4 @@
---[[ Media processing helpers                                      ]]
---[[ Binary resolution, timestamp conversion, and quality mapping. ]]
+--[[ Media processing and binary resolution utilities ]]
 
 local mp = require("mp")
 local utils = require("mp.utils")
@@ -7,32 +6,33 @@ local utils = require("mp.utils")
 local msg = require("mp.msg")
 local StringOps = require("lib.string_ops")
 
+local Platform = require("lib.platform")
+
 local MediaUtils = {}
 
--- Resolve path to binary executable (local or system)
+-- Resolve executable path from local script directory or system path
 function MediaUtils.resolve_binary(binary_name)
 	local script_dir = mp.get_script_directory()
+	local ext = Platform.get_binary_extension()
+	local sep = Platform.get_path_separator()
+
 	msg.info("Resolving binary '" .. binary_name .. "' from script dir: " .. tostring(script_dir))
 
 	if script_dir then
-		-- Check sibling directory (e.g. mpv/scripts/yomipv -> mpv/mpv.exe)
-		local portable_path = utils.join_path(script_dir, "..\\..\\" .. binary_name .. ".exe")
-		msg.info("Checking portable path: " .. portable_path)
-		local file = io.open(portable_path, "r")
-		if file then
-			file:close()
-			msg.info("Found portable binary: " .. portable_path)
-			return portable_path
-		end
+		local search_paths = {
+			utils.join_path(script_dir, ".." .. sep .. ".." .. sep .. binary_name .. ext),
+			utils.join_path(script_dir, ".." .. sep .. binary_name .. ext),
+			utils.join_path(script_dir, ".." .. sep .. ".." .. sep .. "bin" .. sep .. binary_name .. ext),
+		}
 
-		-- Check same directory (e.g. mpv/mpv.exe)
-		local portable_path_2 = utils.join_path(script_dir, "..\\" .. binary_name .. ".exe")
-		msg.info("Checking portable path 2: " .. portable_path_2)
-		local file_2 = io.open(portable_path_2, "r")
-		if file_2 then
-			file_2:close()
-			msg.info("Found portable binary 2: " .. portable_path_2)
-			return portable_path_2
+		for _, portable_path in ipairs(search_paths) do
+			msg.info("Checking portable path: " .. portable_path)
+			local file = io.open(portable_path, "r")
+			if file then
+				file:close()
+				msg.info("Found portable binary: " .. portable_path)
+				return portable_path
+			end
 		end
 	end
 
@@ -40,12 +40,11 @@ function MediaUtils.resolve_binary(binary_name)
 	return binary_name
 end
 
--- Convert seconds to timestamp string (HH:MM:SS.mmm)
 function MediaUtils.to_timestamp_str(seconds)
 	return StringOps.to_timestamp(seconds)
 end
 
--- Map quality (0-100) to AVIF CRF (0-63)
+-- Map 0-100 quality to 0-63 CRF value
 function MediaUtils.map_avif_crf(quality)
 	if not quality or quality < 0 then
 		return 32
@@ -57,7 +56,7 @@ function MediaUtils.map_avif_crf(quality)
 	return math.floor(63 - (quality / 100) * 63)
 end
 
--- Map quality (0-100) to JPEG qscale (2-31)
+-- Map 0-100 quality to 2-31 qscale value
 function MediaUtils.map_jpeg_qscale(quality)
 	if not quality or quality < 0 then
 		return 15
@@ -69,7 +68,7 @@ function MediaUtils.map_jpeg_qscale(quality)
 	return math.floor(31 - (quality / 100) * 29)
 end
 
--- Generate unique filename with timestamp
+-- Timestamp-based unique filename generation
 function MediaUtils.generate_filename(prefix, extension, show_ms)
 	local timestamp = os.time()
 	local ms = show_ms and string.format("_%03d", math.floor((os.clock() % 1) * 1000)) or ""
@@ -77,12 +76,10 @@ function MediaUtils.generate_filename(prefix, extension, show_ms)
 	return string.format("%s_%d%s.%s", prefix, timestamp, ms, extension)
 end
 
--- Sanitize path component for filesystem safety
 function MediaUtils.sanitize_path(component)
 	return StringOps.sanitize_filename(component)
 end
 
--- Detect if path is a remote URL
 function MediaUtils.is_remote_path(path)
 	if not path or path == "" then
 		return false

@@ -1,12 +1,10 @@
---[[ Platform Detection and Cross-Platform Utilities           ]]
---[[ Provides OS detection and platform-specific command paths ]]
+--[[ Platform detection and cross-platform command paths ]]
 
 local mp = require("mp")
 local msg = require("mp.msg")
 
 local Platform = {}
 
--- Detect operating system
 local function detect_os()
 	local os_name = mp.get_property("platform")
 
@@ -20,7 +18,6 @@ local function detect_os()
 		end
 	end
 
-	-- Fallback detection via path separator
 	local path_sep = package.config:sub(1, 1)
 	if path_sep == "\\" then
 		return "windows"
@@ -36,53 +33,48 @@ Platform.IS_MACOS = Platform.OS == "macos"
 
 msg.info("Platform detected: " .. Platform.OS)
 
--- Get platform-specific curl command
 function Platform.get_curl_cmd()
 	if Platform.IS_WINDOWS then
 		return "C:\\Windows\\System32\\curl.exe"
-	else
+	elseif Platform.IS_MACOS or Platform.IS_LINUX then
 		return "curl"
 	end
+	return "curl"
 end
 
--- Get platform-specific path separator
 function Platform.get_path_separator()
 	if Platform.IS_WINDOWS then
 		return "\\"
-	else
+	elseif Platform.IS_MACOS or Platform.IS_LINUX then
 		return "/"
 	end
+	return "/"
 end
 
--- Convert path to platform-specific format
 function Platform.normalize_path(path)
 	if not path then
 		return nil
 	end
 
 	if Platform.IS_WINDOWS then
-		-- Convert forward slashes to backslashes
 		local normalized = path:gsub("/", "\\")
-		-- Handle drive letter format
 		normalized = normalized:gsub("^\\?([%a]:)", "%1")
-		-- Remove trailing separator
 		normalized = normalized:gsub("\\$", "")
 		return normalized
-	else
-		-- Convert backslashes to forward slashes
+	elseif Platform.IS_MACOS or Platform.IS_LINUX then
 		local normalized = path:gsub("\\", "/")
-		-- Remove trailing separator
 		normalized = normalized:gsub("/$", "")
 		return normalized
 	end
+
+	return path
 end
 
--- Launch Electron app with platform-specific launcher
+-- Launcher implementation for Electron frontend
 function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
 	local normalized_path = Platform.normalize_path(app_path)
 
 	if Platform.IS_WINDOWS then
-		-- Use PowerShell launcher
 		local start_ps1 = normalized_path .. "\\start_lookup.ps1"
 
 		local cmd_args = {
@@ -107,10 +99,9 @@ function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
 			args = cmd_args,
 		}, callback)
 	else
-		-- Use bash launcher
 		local start_sh = normalized_path .. "/start_lookup.sh"
 
-		-- Make script executable first (best effort)
+		-- Make script executable first
 		mp.command_native_async({
 			name = "subprocess",
 			playback_only = false,
@@ -136,12 +127,20 @@ function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
 	end
 end
 
--- Get null device path for output redirection
 function Platform.get_null_device()
 	if Platform.IS_WINDOWS then
 		return "nul"
-	else
+	elseif Platform.IS_MACOS or Platform.IS_LINUX then
 		return "/dev/null"
+	end
+	return "/dev/null"
+end
+
+function Platform.get_binary_extension()
+	if Platform.IS_WINDOWS then
+		return ".exe"
+	else
+		return ""
 	end
 end
 

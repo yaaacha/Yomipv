@@ -7,20 +7,16 @@ local Collections = require("lib.collections")
 local MediaUtils = require("media.helpers")
 
 local MpvEncoder = {}
-
--- Path to MPV executable for encoding tasks
 MpvEncoder.exec = MediaUtils.resolve_binary("mpv")
 
--- Internal Logic
-
--- Build isolated MPV command
 local function build_base_command(source, ...)
 	local args = {
 		MpvEncoder.exec,
-		"--no-config", -- Bypass user config
+		"--no-config",
 		"--loop-file=no",
 		"--keep-open=no",
 		"--no-ocopy-metadata",
+		"--hr-seek=yes",
 	}
 
 	for i = 1, select("#", ...) do
@@ -35,8 +31,6 @@ local function build_base_command(source, ...)
 end
 
 -- Picture Extraction
-
--- Generate arguments for capture (static or animated)
 function MpvEncoder.generate_picture_args(config, source, output, time, duration)
 	local codec_flags
 	local timeline_flags = {
@@ -93,7 +87,7 @@ function MpvEncoder.generate_picture_args(config, source, output, time, duration
 		}
 	end
 
-	-- Apply hardware-accelerated scaling and FPS limiting
+	-- Hardware-accelerated scaling
 	local filters = {}
 	if width > 0 then
 		table.insert(filters, string.format("scale=%d:-1", width))
@@ -120,8 +114,6 @@ function MpvEncoder.generate_picture_args(config, source, output, time, duration
 end
 
 -- Audio Extraction
-
--- Generate arguments for audio fragment extraction
 function MpvEncoder.generate_audio_args(config, source, output, start_time, end_time)
 	local audio_flags
 	if config.audio_format == "opus" then

@@ -6,10 +6,8 @@ local MediaUtils = require("media.helpers")
 
 local FFmpegEncoder = {}
 
--- Path to FFmpeg executable
 FFmpegEncoder.exec = MediaUtils.resolve_binary("ffmpeg")
 
--- Generate capture arguments
 function FFmpegEncoder.generate_picture_args(config, source, output, time, duration)
 	local args = {
 		FFmpegEncoder.exec,
@@ -19,12 +17,10 @@ function FFmpegEncoder.generate_picture_args(config, source, output, time, durat
 		"-y",
 	}
 
-	-- Seek input
-	table.insert(args, "-ss")
-	table.insert(args, MediaUtils.to_timestamp_str(time))
-
 	table.insert(args, "-i")
 	table.insert(args, source)
+	table.insert(args, "-ss")
+	table.insert(args, MediaUtils.to_timestamp_str(time))
 
 	local format, quality, width, fps
 	if config.picture_animated then
@@ -44,7 +40,6 @@ function FFmpegEncoder.generate_picture_args(config, source, output, time, durat
 		table.insert(args, "1")
 	end
 
-	-- Apply video filters
 	local filters = {}
 	if width > 0 then
 		table.insert(filters, string.format("scale=%d:-1", width))
@@ -59,7 +54,6 @@ function FFmpegEncoder.generate_picture_args(config, source, output, time, durat
 		table.insert(args, table.concat(filters, ","))
 	end
 
-	-- Set codec parameters
 	if format == "avif" then
 		table.insert(args, "-c:v")
 		table.insert(args, "libaom-av1")
@@ -93,13 +87,12 @@ function FFmpegEncoder.generate_picture_args(config, source, output, time, durat
 		table.insert(args, tostring(math.floor(31 - (quality / 100) * 30 + 1)))
 	end
 
-	table.insert(args, "-an") -- Disable audio
+	table.insert(args, "-an")
 	table.insert(args, output)
 
 	return args
 end
 
--- Generate audio arguments
 function FFmpegEncoder.generate_audio_args(config, source, output, start_time, end_time)
 	local args = {
 		FFmpegEncoder.exec,
@@ -109,20 +102,17 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 		"-y",
 	}
 
-	-- Seek input
+	table.insert(args, "-i")
+	table.insert(args, source)
 	table.insert(args, "-ss")
 	table.insert(args, MediaUtils.to_timestamp_str(start_time or 0))
 
-	table.insert(args, "-i")
-	table.insert(args, source)
-
-	-- Set duration
 	if end_time and start_time then
 		table.insert(args, "-t")
 		table.insert(args, tostring(end_time - start_time))
 	end
 
-	-- Select currently playing audio track
+	-- Retrieve track information for specific audio mapping
 	local track_list = mp.get_property_native("track-list")
 	local audio_track_index = 0
 	local selected_track_index = 0
@@ -142,7 +132,6 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 	table.insert(args, "-map")
 	table.insert(args, "0:a:" .. tostring(selected_track_index))
 
-	-- Set codec parameters
 	if config.audio_format == "opus" then
 		table.insert(args, "-c:a")
 		table.insert(args, "libopus")
@@ -151,7 +140,6 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 		table.insert(args, "-application")
 		table.insert(args, "voip")
 	else
-		-- Default to MP3
 		table.insert(args, "-c:a")
 		table.insert(args, "libmp3lame")
 		table.insert(args, "-b:a")
@@ -160,10 +148,8 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 		table.insert(args, "0")
 	end
 
-	-- Mix to mono
 	table.insert(args, "-ac")
 	table.insert(args, "1")
-
 	table.insert(args, "-vn")
 	table.insert(args, output)
 

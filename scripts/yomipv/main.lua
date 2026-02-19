@@ -82,7 +82,6 @@ local function launch_lookup_app()
 
 	msg.info("Launching lookup app from: " .. app_path)
 
-	-- Check if process is running
 	mp.command_native_async({
 		name = "subprocess",
 		playback_only = false,
@@ -100,7 +99,6 @@ local function launch_lookup_app()
 			msg.info("Lookup app already running, skipping startup")
 			return
 		end
-
 		local mpv_pid = utils.getpid()
 		local ipc_pipe = mp.get_property("input-ipc-server")
 
@@ -110,15 +108,16 @@ local function launch_lookup_app()
 			end
 			if Platform.IS_WINDOWS then
 				return pipe:match("^\\\\.\\pipe\\")
-			else
+			elseif Platform.IS_MACOS or Platform.IS_LINUX then
 				return pipe:find("/")
 			end
+			return false
 		end
 
 		if not is_valid_pipe(ipc_pipe) then
 			if Platform.IS_WINDOWS then
 				ipc_pipe = "\\\\.\\pipe\\yomipv-" .. mpv_pid
-			else
+			elseif Platform.IS_MACOS or Platform.IS_LINUX then
 				ipc_pipe = "/tmp/yomipv-" .. mpv_pid
 			end
 			mp.set_property("input-ipc-server", ipc_pipe)

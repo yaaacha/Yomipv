@@ -69,7 +69,7 @@ local default_options = {
 	image_template = '<img src="%s" class="yomipv-image">',
 
 	--[[ Misc info settings ]]
-	
+
 	-- {name} Sanitized title
 	-- {season} Season info
 	-- {episode} Episode info
