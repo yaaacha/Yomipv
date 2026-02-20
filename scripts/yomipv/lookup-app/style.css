@@ -165,7 +165,8 @@ body {
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  display: inline-block;
+  display: block;
+  width: max-content;
   margin-bottom: 4px;
   cursor: pointer;
   transition: color 0.2s ease, text-shadow 0.2s ease;

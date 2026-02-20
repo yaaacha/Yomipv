@@ -3,6 +3,47 @@ const { ipcRenderer } = require('electron');
 const glossaryEl = document.getElementById('glossary-content');
 const headerEl = document.getElementById('term-header');
 
+const filterDictionaryStyles = (styleEl, dictName) => {
+  if (!styleEl || !styleEl.sheet || !styleEl.sheet.cssRules) return styleEl ? styleEl.outerHTML : '';
+  try {
+    const filterRules = (rules) => {
+      let cssText = '';
+      for (let i = 0; i < rules.length; i++) {
+        const rule = rules[i];
+        
+        if (rule.type === CSSRule.STYLE_RULE) {
+          const match = rule.selectorText && rule.selectorText.match(/\[data-dictionary=["']?([^\]"']+)["']?\]/);
+          if (match) {
+            if (match[1] === dictName) {
+              cssText += rule.cssText + '\n';
+            }
+          } else if (rule.cssRules && rule.cssRules.length > 0) {
+            let ownStyles = rule.style && rule.style.length > 0 ? rule.style.cssText : '';
+            const innerText = filterRules(rule.cssRules);
+            if (innerText.trim().length > 0 || ownStyles.trim().length > 0) {
+              cssText += `${rule.selectorText} {\n${ownStyles}\n${innerText}}\n`;
+            }
+          } else {
+            cssText += rule.cssText + '\n';
+          }
+        } else if (rule.type === CSSRule.KEYFRAMES_RULE || rule.type === CSSRule.FONT_FACE_RULE || rule.type === CSSRule.SUPPORTS_RULE) {
+           cssText += rule.cssText + '\n';
+        } else if (rule.cssRules && rule.cssRules.length > 0) {
+           cssText += rule.cssText + '\n';
+        } else {
+           cssText += rule.cssText + '\n';
+        }
+      }
+      return cssText;
+    };
+    const filteredCss = filterRules(styleEl.sheet.cssRules);
+    return `<style>${filteredCss.replace(/\n+/g, ' ')}</style>`;
+  } catch (e) {
+    console.error('[UI] Failed to filter styles:', e);
+    return styleEl.outerHTML;
+  }
+};
+
 ipcRenderer.on('lookup-term', async (event, data) => {
   console.log('[IPC] Received lookup data:', JSON.stringify(data));
 
@@ -281,15 +322,16 @@ ipcRenderer.on('lookup-term', async (event, data) => {
 
           titleEl.classList.add('selected');
           
+          const dictName = el.getAttribute('data-dictionary');
           const dictionaryHtml = el.outerHTML;
           let styleHtml = '';
           const styleEl = glossaryEl.querySelector('style');
           if (styleEl) {
-            styleHtml = styleEl.outerHTML;
+            styleHtml = filterDictionaryStyles(styleEl, dictName);
           }
           
           const dictContent = `<div class="yomitan-glossary" style="text-align: left;"><ol>${dictionaryHtml}</ol></div>${styleHtml}`;
-          console.log('[UI] Dictionary selected:', el.getAttribute('data-dictionary'));
+          console.log('[UI] Dictionary selected:', dictName);
           
           ipcRenderer.send('dictionary-selected', dictContent);
         });
@@ -337,12 +379,13 @@ document.addEventListener('mouseup', () => {
     const selectedTitle = glossaryEl.querySelector('[data-dictionary] > .selected');
     if (selectedTitle) {
       const dictEl = selectedTitle.parentElement;
+      const dictName = dictEl.getAttribute('data-dictionary');
       const dictionaryHtml = dictEl.outerHTML;
       
       let styleHtml = '';
       const styleEl = glossaryEl.querySelector('style');
       if (styleEl) {
-        styleHtml = styleEl.outerHTML;
+        styleHtml = filterDictionaryStyles(styleEl, dictName);
       }
       
       const dictContent = `<div class="yomitan-glossary" style="text-align: left;"><ol>${dictionaryHtml}</ol></div>${styleHtml}`;
