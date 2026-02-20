@@ -311,13 +311,13 @@ function Interaction.bind(selector)
 		end
 	end, "repeatable")
 
-	register("Ctrl+RIGHT", "selector-selection-next", function(s)
+	register(style.key_selection_next or "Ctrl+RIGHT", "selector-selection-next", function(s)
 		if s.index + s.selection_len <= #s.tokens then
 			s.selection_len = s.selection_len + 1
 			s:render()
 		end
 	end, "repeatable")
-	register("Ctrl+LEFT", "selector-selection-prev", function(s)
+	register(style.key_selection_prev or "Ctrl+LEFT", "selector-selection-prev", function(s)
 		if s.index > 1 then
 			s.index = s.index - 1
 			s.selection_len = s.selection_len + 1

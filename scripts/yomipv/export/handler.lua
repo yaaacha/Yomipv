@@ -657,6 +657,8 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 		key_down = self.config.key_selector_down,
 		key_expand_prev = self.config.key_expand_prev,
 		key_expand_next = self.config.key_expand_next,
+		key_selection_next = self.config.key_selection_next,
+		key_selection_prev = self.config.key_selection_prev,
 		key_lookup = self.config.key_selector_lookup,
 		key_split = self.config.key_selector_split,
 		navigation_delay = self.config.selector_navigation_delay,
