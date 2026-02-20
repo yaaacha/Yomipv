@@ -10,8 +10,14 @@ local Platform = require("lib.platform")
 
 local MediaUtils = {}
 
+local binary_cache = {}
+
 -- Resolve executable path from local script directory or system path
 function MediaUtils.resolve_binary(binary_name)
+	if binary_cache[binary_name] then
+		return binary_cache[binary_name]
+	end
+
 	local script_dir = mp.get_script_directory()
 	local ext = Platform.get_binary_extension()
 	local sep = Platform.get_path_separator()
@@ -31,12 +37,14 @@ function MediaUtils.resolve_binary(binary_name)
 			if file then
 				file:close()
 				msg.info("Found portable binary: " .. portable_path)
+				binary_cache[binary_name] = portable_path
 				return portable_path
 			end
 		end
 	end
 
 	msg.info("Falling back to system binary: " .. binary_name)
+	binary_cache[binary_name] = binary_name
 	return binary_name
 end
 

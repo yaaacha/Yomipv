@@ -9,6 +9,7 @@ const entryCounter = document.getElementById('entry-counter');
 let allEntries = [];
 let currentEntryIndex = 0;
 let currentShowFrequencies = false;
+let currentDictionaryMedia = [];
 
 const filterDictionaryStyles = (styleEl, dictName) => {
   if (!styleEl || !styleEl.sheet || !styleEl.sheet.cssRules || styleEl.sheet.cssRules.length === 0) return '';
@@ -182,7 +183,34 @@ const renderEntry = (index, rawEntries, showFrequencies) => {
     let content = fields.glossary || fields.definition;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = content;
-    tempDiv.querySelectorAll('img').forEach(img => img.remove());
+
+    tempDiv.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (src && currentDictionaryMedia) {
+        const srcFilename = src.split(/[\\/]/).pop();
+        const media = currentDictionaryMedia.find(m => 
+          m.ankiFilename === src || 
+          m.filename === src || 
+          m.ankiFilename === srcFilename || 
+          m.filename === srcFilename
+        );
+
+        if (media && media.content) {
+          const ext = srcFilename.split('.').pop().toLowerCase();
+          const mimeMap = {
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml'
+          };
+          const mime = mimeMap[ext] || 'image/png';
+          img.src = `data:${mime};base64,${media.content}`;
+          img.setAttribute('data-anki-src', src);
+        }
+      }
+    });
 
     tempDiv.querySelectorAll('[data-dictionary*="Jitendex"]').forEach(dictEl => {
       dictEl.querySelectorAll('[data-sc-content="glossary"]').forEach(gl => {
@@ -243,7 +271,15 @@ const renderEntry = (index, rawEntries, showFrequencies) => {
 
 const sendSelectedDict = (el) => {
   const dictName = el.getAttribute('data-dictionary');
-  const dictionaryHtml = el.outerHTML;
+  
+  // Clone for export and revert image sources to original filenames
+  const exportEl = el.cloneNode(true);
+  exportEl.querySelectorAll('img[data-anki-src]').forEach(img => {
+    img.src = img.getAttribute('data-anki-src');
+    img.removeAttribute('data-anki-src');
+  });
+
+  const dictionaryHtml = exportEl.outerHTML;
 
   let styleHtml = '';
   glossaryEl.querySelectorAll('style').forEach(styleEl => {
@@ -303,6 +339,7 @@ ipcRenderer.on('lookup-term', async (event, data) => {
 
     if (!result) throw new Error('All Yomitan endpoints failed');
 
+    currentDictionaryMedia = result.dictionaryMedia || (result[0] && result[0].dictionaryMedia) || [];
     const entries = (result && result.fields) || (result && result[0] && result[0].fields) || [];
 
     if (!Array.isArray(entries) || entries.length === 0) {

@@ -40,7 +40,7 @@ end
 function History:wrap_handler(callback, ...)
 	local args = { ... }
 	return function()
-		local ok, err = pcall(callback, table.unpack(args))
+		local ok, err = pcall(callback, unpack(args))
 		if not ok then
 			msg.error("History UI Error: " .. tostring(err))
 		end

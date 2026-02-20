@@ -34,12 +34,15 @@ Platform.IS_MACOS = Platform.OS == "macos"
 msg.info("Platform detected: " .. Platform.OS)
 
 function Platform.get_curl_cmd()
-	if Platform.IS_WINDOWS then
-		return "C:\\Windows\\System32\\curl.exe"
-	elseif Platform.IS_MACOS or Platform.IS_LINUX then
-		return "curl"
-	end
 	return "curl"
+end
+
+function Platform.get_temp_dir()
+	if Platform.IS_WINDOWS then
+		return os.getenv("TEMP") or os.getenv("TMP") or "C:\\Windows\\Temp"
+	else
+		return os.getenv("TMPDIR") or "/tmp"
+	end
 end
 
 function Platform.get_path_separator()

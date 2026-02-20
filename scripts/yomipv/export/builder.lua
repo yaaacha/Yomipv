@@ -126,7 +126,7 @@ function Builder:_make_new_note_data(existing_fields, new_data)
 			if not result[key] or result[key] == "" then
 				result[key] = value
 			else
-				result[key] = result[key] .. " " .. value
+				result[key] = result[key] .. "<br>" .. value
 			end
 		end
 	end

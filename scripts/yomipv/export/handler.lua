@@ -6,6 +6,7 @@ local Collections = require("lib.collections")
 local StringOps = require("lib.string_ops")
 local Player = require("lib.player")
 local Counter = require("lib.counter")
+local Curl = require("lib.curl")
 local Platform = require("lib.platform")
 
 local Handler = {}
@@ -156,6 +157,10 @@ function Handler:initialize_export_context(gui)
 	if not self.deps.tracker.is_appending() then
 		self.deps.tracker.clear()
 	end
+
+	-- Reset pinned entry state from previous session
+	self.active_entry_expression = nil
+	self.active_entry_reading = nil
 
 	local sub = self.deps.tracker.export_current_session()
 	local primary = StringOps.clean_subtitle(sub and sub.primary_sid or "", true)
@@ -684,27 +689,9 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 				showFrequencies = self.config.lookup_show_frequencies,
 			}
 			local json_body = require("mp.utils").format_json(data_to_send)
-			-- Use direct subprocess for reliability with explicit UTF-8 header
-			mp.command_native_async({
-				name = "subprocess",
-				playback_only = false,
-				args = {
-					Platform.get_curl_cmd(),
-					"-s",
-					"-X",
-					"POST",
-					"-H",
-					"Content-Type: application/json; charset=utf-8",
-					"-d",
-					json_body,
-					"--connect-timeout",
-					"1",
-					"http://127.0.0.1:19634",
-				},
-			}, function() end)
+			Curl.post("http://127.0.0.1:19634", json_body, function() end)
 		end,
 		on_hide = function()
-			-- Use a direct subprocess call for maximal reliability
 			mp.command_native_async({
 				name = "subprocess",
 				playback_only = false,
@@ -880,8 +867,8 @@ function Handler:handle_duplicate_note(note_fields, _error_msg)
 		end
 	end
 
-	-- Quote values to force exact field matching
-	local query = string.format('%s:"%s"', self.config.expression_field, expression)
+	-- Scope to the configured deck
+	local query = string.format('deck:"%s" %s:"%s"', self.config.deck, self.config.expression_field, expression)
 	if reading and reading ~= "" then
 		query = query .. string.format(' %s:"%s"', self.config.reading_field, reading)
 	end

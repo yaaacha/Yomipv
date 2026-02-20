@@ -3,6 +3,7 @@
 
 local mp = require("mp")
 local msg = require("mp.msg")
+local Platform = require("lib.platform")
 
 local Curl = {}
 
@@ -15,9 +16,9 @@ end
 
 -- Execute request with detailed callback
 function Curl.request(url, json_body, callback)
-	-- Write to temp file to avoid Windows pipe CP1252 corruption
-	local temp_dir = os.getenv("TEMP") or os.getenv("TMP") or "."
-	local temp_file = string.format("%s\\yomipv_req_%d_%d.json", temp_dir, os.time(), math.random(10000, 99999))
+	local temp_dir = Platform.get_temp_dir()
+	local sep = Platform.get_path_separator()
+	local temp_file = string.format("%s%syomipv_req_%d_%d.json", temp_dir, sep, os.time(), math.random(10000, 99999))
 
 	local f = io.open(temp_file, "wb")
 	if not f then
@@ -36,6 +37,10 @@ function Curl.request(url, json_body, callback)
 		"Content-Type: application/json",
 		"--data-binary",
 		"@" .. temp_file,
+		"--connect-timeout",
+		"5",
+		"--max-time",
+		"10",
 		url,
 	}
 

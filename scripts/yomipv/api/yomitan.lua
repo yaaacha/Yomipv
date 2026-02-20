@@ -171,32 +171,16 @@ function Yomitan:tokenize(text, callback, scan_length)
 		scanLength = scan_length or DEFAULT_SCAN_LENGTH,
 	}
 
-	-- Try alternate endpoints for compatibility
-	local function try_endpoints(endpoints, idx)
-		local endpoint = endpoints[idx]
-		if not endpoint then
-			return callback(nil, nil, "All tokenization endpoints failed")
+	self:request("/tokenize", params, function(curl_output)
+		local response, _ = Yomitan.parse_result(curl_output)
+		local content = response and (response.content or (response[1] and response[1].content))
+
+		if not content then
+			return callback(nil, nil, "Tokenization failed")
 		end
 
-		msg.info(string.format("Tokenize attempt: %s", endpoint))
-
-		self:request(endpoint, params, function(curl_output)
-			local response, _ = Yomitan.parse_result(curl_output)
-
-			local content = response and (response.content or (response[1] and response[1].content))
-
-			if not content then
-				msg.warn(string.format("Endpoint %s failed or returned no content", endpoint))
-				return try_endpoints(endpoints, idx + 1)
-			end
-
-			msg.info(string.format("Endpoint %s succeeded", endpoint))
-			local tokens = build_tokens_from_content(content)
-			callback(tokens, content)
-		end)
-	end
-
-	try_endpoints({ "/tokenize", "/api/tokenize" }, 1)
+		callback(build_tokens_from_content(content), content)
+	end)
 end
 
 function Yomitan:tokenize_with_scan_length(text, scan_length, callback)
@@ -209,8 +193,10 @@ function Yomitan:tokenize_with_scan_length(text, scan_length, callback)
 end
 
 function Yomitan:get_anki_fields(term, markers, context, callback, active_expression, active_reading)
+	-- When the user explicitly navigated to an entry, look it up directly
+	local lookup_text = (active_expression and active_expression ~= "") and active_expression or term
 	local params = {
-		text = term,
+		text = lookup_text,
 		type = "term",
 		markers = markers,
 		maxEntries = DEFAULT_MAX_ENTRIES,
@@ -224,87 +210,72 @@ function Yomitan:get_anki_fields(term, markers, context, callback, active_expres
 		end
 	end
 
-	local function try_endpoints(endpoints, idx)
-		local endpoint = endpoints[idx]
-		if not endpoint then
-			return callback(nil, "All ankiFields endpoints failed")
+	self:request("/ankiFields", params, function(curl_output)
+		local response, error = Yomitan.parse_result(curl_output)
+		if error then
+			return callback(nil, "ankiFields request failed: " .. error)
 		end
 
-		msg.info(string.format("ankiFields attempt: %s", endpoint))
+		local fields_list = (response and response.fields) or (response and response[1] and response[1].fields)
+		if not fields_list or #fields_list == 0 then
+			return callback(nil, "No dictionary entry found")
+		end
 
-		self:request(endpoint, params, function(curl_output)
-			local response, error = Yomitan.parse_result(curl_output)
-			if error then
-				msg.warn(string.format("Endpoint %s parse failed: %s", endpoint, error))
-				return try_endpoints(endpoints, idx + 1)
-			end
+		local selected_entry = fields_list[1]
 
-			local fields_list = (response and response.fields) or (response and response[1] and response[1].fields)
-			if not fields_list or #fields_list == 0 then
-				msg.warn(string.format("Endpoint %s returned no fields", endpoint))
-				return try_endpoints(endpoints, idx + 1)
-			end
-
-			msg.info(string.format("Endpoint %s succeeded", endpoint))
-
-			local selected_entry = fields_list[1]
-
-			-- Skip scoring if entry was explicitly navigated to
-			if active_expression and active_expression ~= "" then
-				for _, entry in ipairs(fields_list) do
-					if
-						entry.expression == active_expression
-						and (not active_reading or active_reading == "" or entry.reading == active_reading)
-					then
-						selected_entry = entry
-						msg.info(string.format("Pinned entry by lookup selection: %s", active_expression))
-						break
-					end
-				end
-			else
-				local best_score = -1
-				for _, entry in ipairs(fields_list) do
-					local score = 0
-					local expr = entry.expression or ""
-					local reading = entry.reading or ""
-					local pitch = entry["pitch-accents"] or ""
-
-					-- Mirrors lookup app sort order for consistency
-					if pitch ~= "" then
-						score = score + 2
-					end
-					if expr ~= reading then
-						score = score + 1
-					end
-
-					if score > best_score then
-						best_score = score
-						selected_entry = entry
-					end
-
-					if score == 3 and expr == term then
-						break
-					end
+		if active_expression and active_expression ~= "" then
+			for _, entry in ipairs(fields_list) do
+				if
+					entry.expression == active_expression
+					and (not active_reading or active_reading == "" or entry.reading == active_reading)
+				then
+					selected_entry = entry
+					msg.info(string.format("Pinned entry by lookup selection: %s", active_expression))
+					break
 				end
 			end
+		else
+			local best_score = -1
+			for _, entry in ipairs(fields_list) do
+				local score = 0
+				local expr = entry.expression or ""
+				local reading = entry.reading or ""
+				local pitch = entry["pitch-accents"] or ""
 
-			msg.info(
-				string.format(
-					"Selected entry: %s from %s",
-					selected_entry.expression or "nil",
-					selected_entry.dictionary or "unknown"
-				)
+				-- Mirrors lookup app sort order
+				if pitch ~= "" then
+					score = score + 2
+				end
+				if expr ~= reading then
+					score = score + 1
+				end
+
+				if score > best_score then
+					best_score = score
+					selected_entry = entry
+				end
+
+				if score == 3 and expr == term then
+					break
+				end
+			end
+		end
+
+		msg.info(
+			string.format(
+				"Selected entry: %s from %s",
+				selected_entry.expression or "nil",
+				selected_entry.dictionary or "unknown"
 			)
+		)
 
-			callback({
-				fields = selected_entry,
-				dictionaryMedia = response and response.dictionaryMedia,
-				audioMedia = response and response.audioMedia,
-			}, nil)
-		end)
-	end
-
-	try_endpoints({ "/ankiFields", "/api/ankiFields" }, 1)
+		callback({
+			fields = selected_entry,
+			dictionaryMedia = (response and response.dictionaryMedia)
+				or (response and response[1] and response[1].dictionaryMedia),
+			audioMedia = (response and response.audioMedia) or (response and response[1] and response[1].audioMedia),
+		}, nil)
+	end)
 end
 
 function Yomitan:get_sentence_furigana(text, callback, cached_content)
