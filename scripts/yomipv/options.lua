@@ -117,6 +117,7 @@ local default_options = {
 	animation_fps = 10, -- Frames per second
 	animation_duration = "auto", -- Seconds or "auto" to match subtitle duration
 	animation_offset = 0.0, -- Offset in seconds relative to subtitle start
+	animation_end_offset = 0.0, -- Offset in seconds relative to subtitle end
 
 	-- Advanced codec settings
 	picture_webp_lossless = false,
