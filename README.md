@@ -14,19 +14,26 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 - **[Yomitan](https://yomitan.wiki/)** and **[Yomitan Api](https://github.com/yomidevs/yomitan-api)**
 - **[Node.js](https://nodejs.org/)** (Required for the lookup app)
 - **curl** (Usually pre-installed on Windows, used for API requests)
+- **[Hianime Plugin](https://github.com/yaaacha/yt-dlp-hianime)** for mpv
 
 ## Installation
 
 1. **Clone the repository** to your MPV directory and install dependencies **(make sure you have Node.js installed)**:
+   - MacOS: `~/.config/mpv/`
+     ```
+     git clone https://github.com/yaaacha/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
+     ```
+     
    - Windows: `%APPDATA%/mpv/`
      ```
-     git clone https://github.com/BrenoAqua/Yomipv && xcopy /e /i /y Yomipv . && rd /s /q Yomipv && cd scripts\yomipv\lookup-app && npm install
+     git clone https://github.com/yaaacha/Yomipv && xcopy /e /i /y Yomipv . && rd /s /q Yomipv && cd scripts\yomipv\lookup-app && npm install
      ```
    
    - Linux: `~/.config/mpv/`
      ```
-     git clone https://github.com/BrenoAqua/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
+     git clone https://github.com/yaaacha/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
      ```
+     
 3. **Configure Settings**:
    - Open `script-opts/yomipv.conf` and update your Anki deck/note type names and field mappings.
 
@@ -38,10 +45,13 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 
 ### Basic Workflow
 
-1. Open a video with Japanese subtitles in MPV
-2. Press **`c`** to activate the word selector
-3. Navigate with **arrow keys** or **mouse hover** to select a word
-4. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
+1. Open Terminal and insert this script
+   ```cd ~/.config/mpv/Yomipv/scripts/yomipv/lookup-app && npm start```
+   open new tab terminal (press Cmd+t) and type `mpv` to start mpv
+2. Drag and drop video with subtitle or copy hianime link then press `ctrl(⌃)+v`
+3. Press **`c`** to activate the word selector
+4. Navigate with **arrow keys** or **mouse hover** to select a word
+5. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
 
 ### Advanced Features
 
@@ -59,7 +69,7 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 - **History Panel (`a`)**: Toggle subtitle history panel
   - Click on previous/next lines to select them to expand the subtitle lines (when selector is open) or seek to that timestamp (when selector is closed)
 
-There are demos for all features [here](https://github.com/BrenoAqua/Yomipv/tree/main/features)
+There are demos for all features [here](https://github.com/yaaacha/Yomipv/tree/main/features)
 
 ## Troubleshooting
 
@@ -68,5 +78,5 @@ There are demos for all features [here](https://github.com/BrenoAqua/Yomipv/tree
 - Check that curl is available at `C:\Windows\System32\curl.exe`
 
 > [!WARNING]
-> **Linux Support Not Tested**
-> This script has primarily been developed and tested on Windows. While cross-platform support is intended, Linux users may encounter issues. Please report any bugs or compatibility problems.
+> **Linux and Windows Support Not Tested for this version**
+> This script has primarily been developed and tested on Windows and modified on MacOS. While cross-platform support is intended, Linux and Windows users may encounter issues. Please report any bugs or compatibility problems.
