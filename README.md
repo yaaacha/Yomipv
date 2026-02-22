@@ -46,12 +46,14 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 ### Basic Workflow
 
 1. Open Terminal and insert this script
-   ```cd ~/.config/mpv/Yomipv/scripts/yomipv/lookup-app && npm start```
-   open new tab terminal (press Cmd+t) and type `mpv` to start mpv
-2. Drag and drop video with subtitle or copy hianime link then press `ctrl(⌃)+v`
-3. Press **`c`** to activate the word selector
-4. Navigate with **arrow keys** or **mouse hover** to select a word
-5. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
+   ```
+   cd ~/.config/mpv/Yomipv/scripts/yomipv/lookup-app && npm start
+   ```
+2. Open new tab terminal (press Cmd+t) and type `mpv` to start mpv
+3. Drag and drop video with subtitle or copy hianime link then press `ctrl(⌃)+v`
+4. Press **`c`** to activate the word selector
+5. Navigate with **arrow keys** or **mouse hover** to select a word
+6. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
 
 ### Advanced Features
 
