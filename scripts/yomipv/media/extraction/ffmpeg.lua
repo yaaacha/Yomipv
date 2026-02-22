@@ -93,7 +93,7 @@ function FFmpegEncoder.generate_picture_args(config, source, output, time, durat
 	return args
 end
 
-function FFmpegEncoder.generate_audio_args(config, source, output, start_time, end_time)
+function FFmpegEncoder.generate_audio_args(config, source, output, start_time, end_time, volume)
 	local args = {
 		FFmpegEncoder.exec,
 		"-hide_banner",
@@ -131,6 +131,11 @@ function FFmpegEncoder.generate_audio_args(config, source, output, start_time, e
 
 	table.insert(args, "-map")
 	table.insert(args, "0:a:" .. tostring(selected_track_index))
+
+	if volume and volume ~= 100 then
+		table.insert(args, "-af")
+		table.insert(args, string.format("volume=%.4f", volume / 100.0))
+	end
 
 	if config.audio_format == "opus" then
 		table.insert(args, "-c:a")

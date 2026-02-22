@@ -55,12 +55,16 @@ function Audio.create_job(subtitle)
 	function job:run()
 		msg.info("Starting audio extraction: " .. target_file)
 
+		local volume = 100
+		if Audio.config.audio_match_volume then
+			volume = mp.get_property_native("volume") or 100
+		end
+
 		local args
-		-- Use FFmpeg for local files if configured; fallback to MPV encoder for remotes
 		if Audio.config.audio_use_ffmpeg and not MediaUtils.is_remote_path(source) then
-			args = FFmpegEncoder.generate_audio_args(Audio.config, source, target_file, start_time, end_time)
+			args = FFmpegEncoder.generate_audio_args(Audio.config, source, target_file, start_time, end_time, volume)
 		else
-			args = MpvEncoder.generate_audio_args(Audio.config, source, target_file, start_time, end_time)
+			args = MpvEncoder.generate_audio_args(Audio.config, source, target_file, start_time, end_time, volume)
 		end
 
 		mp.command_native_async({

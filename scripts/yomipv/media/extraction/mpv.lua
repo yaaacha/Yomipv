@@ -114,7 +114,7 @@ function MpvEncoder.generate_picture_args(config, source, output, time, duration
 end
 
 -- Audio Extraction
-function MpvEncoder.generate_audio_args(config, source, output, start_time, end_time)
+function MpvEncoder.generate_audio_args(config, source, output, start_time, end_time, volume)
 	local audio_flags
 	if config.audio_format == "opus" then
 		audio_flags = {
@@ -132,15 +132,20 @@ function MpvEncoder.generate_audio_args(config, source, output, start_time, end_
 
 	local aid = mp.get_property("aid", "auto")
 
-	local base_args = build_base_command(
-		source,
+	local filter_flags = {}
+	if volume and volume ~= 100 then
+		table.insert(filter_flags, "--af-add=volume=volume=" .. tostring(volume / 100.0))
+	end
+
+	local combined_flags = Collections.concat({
 		"--video=no",
 		"--aid=" .. aid,
 		"--audio-channels=mono",
 		"--start=" .. MediaUtils.to_timestamp_str(start_time),
 		"--end=" .. MediaUtils.to_timestamp_str(end_time),
-		Collections.unpack(audio_flags)
-	)
+	}, audio_flags, filter_flags)
+
+	local base_args = build_base_command(source, Collections.unpack(combined_flags))
 
 	table.insert(base_args, "-o")
 	table.insert(base_args, output)

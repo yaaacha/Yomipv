@@ -129,6 +129,7 @@ local default_options = {
 	audio_format = "opus", -- Format: mp3, opus
 	audio_bitrate = "64k",
 	filename_show_ms = true, -- Include milliseconds in filenames
+	audio_match_volume = false, -- Match extracted audio volume to mpv volume
 
 	--[[ Selector settings ]]
 
