@@ -1,4 +1,4 @@
---[[ Yomipv | https://github.com/BrenoAqua/Yomipv ]]
+-- [[ Yomipv | https://github.com/BrenoAqua/Yomipv ]]
 
 local mp = require("mp")
 local msg = require("mp.msg")
@@ -7,9 +7,13 @@ local utils = require("mp.utils")
 local yomipv_version = "0.1.0"
 mp.commandv("script-message", "yomipv-version", yomipv_version)
 
+<<<<<<< HEAD
 -- Logika dinamis biar bisa jalan di folder manapun
 local BASE = mp.command_native({'expand-path', '~~/'}):gsub('\\', '/')
 local script_dir = BASE .. "/Yomipv" 
+=======
+local script_dir = mp.get_script_directory() 
+>>>>>>> 82f8435 (Fix macOS pathing and Lua table error)
 
 package.path = script_dir .. "/?.lua;" .. script_dir .. "/?/init.lua;" .. package.path
 
@@ -79,7 +83,10 @@ local function launch_lookup_app()
         return
     end
 
+<<<<<<< HEAD
     -- PAKSA: Gunakan script_dir dinamis kita daripada nebak-nebak
+=======
+>>>>>>> 82f8435 (Fix macOS pathing and Lua table error)
     if not app_path:find(":") and not app_path:find("^/") then
         app_path = script_dir .. "/" .. app_path
     end

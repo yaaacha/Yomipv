@@ -1,0 +1,4 @@
+node_modules/
+Yomipv/
+*.log
+.DS_Store
