@@ -240,12 +240,7 @@ function Yomitan:get_anki_fields(term, markers, context, callback, active_expres
 				local score = 0
 				local expr = entry.expression or ""
 				local reading = entry.reading or ""
-				local pitch = entry["pitch-accents"] or ""
 
-				-- Mirrors lookup app sort order
-				if pitch ~= "" then
-					score = score + 2
-				end
 				if expr ~= reading then
 					score = score + 1
 				end
@@ -255,7 +250,7 @@ function Yomitan:get_anki_fields(term, markers, context, callback, active_expres
 					selected_entry = entry
 				end
 
-				if score == 3 and expr == term then
+				if score == 1 and expr == term then
 					break
 				end
 			end

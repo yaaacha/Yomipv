@@ -318,6 +318,10 @@ function Handler:handle_selector_result(context, selected_token)
 		)
 	)
 
+	-- Use pending term as fallback if active-entry IPC hasn't arrived yet
+	local effective_expr = self.active_entry_expression or self.pending_lookup_term
+	local effective_reading = self.active_entry_reading or self.pending_lookup_reading
+
 	self.deps.yomitan:get_anki_fields(selected_token.text, yomitan_fields, {
 		text = context.current_subtitle_text,
 		selection = self.last_selection,
@@ -325,7 +329,7 @@ function Handler:handle_selector_result(context, selected_token)
 		["end"] = selected_token.offset + selected_token.text:len(),
 	}, function(data, error)
 		self:handle_anki_fields_result(context, selected_token, data, error)
-	end, self.active_entry_expression, self.active_entry_reading)
+	end, effective_expr, effective_reading)
 end
 
 function Handler:handle_anki_fields_result(context, selected_token, data, error)
@@ -685,6 +689,8 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 			self.selected_dictionary = nil
 			self.active_entry_expression = nil
 			self.active_entry_reading = nil
+			self.pending_lookup_term = data.term
+			self.pending_lookup_reading = data.reading
 			local data_to_send = {
 				term = data.term,
 				reading = data.reading,
@@ -802,6 +808,8 @@ end
 function Handler:set_active_entry(expression, reading)
 	self.active_entry_expression = expression ~= "" and expression or nil
 	self.active_entry_reading = reading ~= "" and reading or nil
+	self.pending_lookup_term = nil
+	self.pending_lookup_reading = nil
 end
 
 function Handler:new()
@@ -812,6 +820,8 @@ function Handler:new()
 		last_selection = nil,
 		active_entry_expression = nil,
 		active_entry_reading = nil,
+		pending_lookup_term = nil,
+		pending_lookup_reading = nil,
 	}
 	setmetatable(obj, self)
 	self.__index = self
