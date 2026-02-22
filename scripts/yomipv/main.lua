@@ -7,7 +7,10 @@ local utils = require("mp.utils")
 local yomipv_version = "0.1.0"
 mp.commandv("script-message", "yomipv-version", yomipv_version)
 
-local script_dir = mp.get_script_directory()
+-- Logika dinamis biar bisa jalan di folder manapun
+local BASE = mp.command_native({'expand-path', '~~/'}):gsub('\\', '/')
+local script_dir = BASE .. "/Yomipv" 
+
 package.path = script_dir .. "/?.lua;" .. script_dir .. "/?/init.lua;" .. package.path
 
 local config = require("options")
@@ -71,16 +74,17 @@ SecondarySid.init(config)
 SubtitleFilter.init(config)
 
 local function launch_lookup_app()
-	local app_path = config.lookup_app_path
-	if not app_path or app_path == "" then
-		return
-	end
+    local app_path = config.lookup_app_path
+    if not app_path or app_path == "" then
+        return
+    end
 
-	if not app_path:find(":") and not app_path:find("^/") then
-		app_path = utils.join_path(mp.get_script_directory(), app_path)
-	end
+    -- PAKSA: Gunakan script_dir dinamis kita daripada nebak-nebak
+    if not app_path:find(":") and not app_path:find("^/") then
+        app_path = script_dir .. "/" .. app_path
+    end
 
-	msg.info("Launching lookup app from: " .. app_path)
+    msg.info("Launching lookup app from: " .. app_path)
 
 	mp.command_native_async({
 		name = "subprocess",
@@ -99,52 +103,23 @@ local function launch_lookup_app()
 			msg.info("Lookup app already running, skipping startup")
 			return
 		end
+
 		local mpv_pid = utils.getpid()
-		local ipc_pipe = mp.get_property("input-ipc-server")
-
-		local function is_valid_pipe(pipe)
-			return pipe and pipe ~= ""
-		end
-
-		if not is_valid_pipe(ipc_pipe) then
-			if Platform.IS_WINDOWS then
-				ipc_pipe = "\\\\.\\pipe\\yomipv-" .. mpv_pid
-			elseif Platform.IS_MACOS or Platform.IS_LINUX then
-				ipc_pipe = "/tmp/yomipv-" .. mpv_pid
-			end
-			mp.set_property("input-ipc-server", ipc_pipe)
-		end
-
 		Player.notify("Yomipv: Starting lookup app...", "info")
 
-		local electron_ipc_pipe = ipc_pipe
-		if Platform.IS_WINDOWS and not electron_ipc_pipe:match("^\\\\.\\pipe\\") then
-			electron_ipc_pipe = "\\\\.\\pipe\\" .. electron_ipc_pipe
-		end
-
-		Platform.launch_electron_app(
-			app_path,
-			mpv_pid,
-			electron_ipc_pipe,
-			function(launch_success, _launch_result, launch_error)
-				if not launch_success then
-					msg.error("Failed to launch lookup app: " .. tostring(launch_error))
-				else
-					msg.info("Lookup app launch command sent")
-				end
+		Platform.launch_electron_app(app_path, mpv_pid, function(launch_success, _launch_result, launch_error)
+			if not launch_success then
+				msg.error("Failed to launch lookup app: " .. tostring(launch_error))
+			else
+				msg.info("Lookup app launch command sent")
 			end
-		)
+		end)
 	end)
 end
 
 launch_lookup_app()
 
 mp.add_key_binding(config.key_open_selector, "yomipv-export", function()
-	msg.info("Key pressed: " .. config.key_open_selector)
-	if not handler then
-		msg.error("Handler not initialized!")
-		return
-	end
 	handler:start_export(history)
 end)
 
@@ -162,49 +137,14 @@ if config.selector_show_history then
 	end)
 end
 
-if config.key_toggle_picture_animated ~= "" then
-	mp.add_key_binding(config.key_toggle_picture_animated, "yomipv-toggle-picture-animated", function()
-		config.picture_animated = not config.picture_animated
-		config.save("picture_animated", config.picture_animated)
-		local status = config.picture_animated and "Enabled" or "Disabled"
-		Player.notify("Animated pictures: " .. status, "info")
-		if history and history.active then
-			history:update(true)
-		end
-	end)
-end
-
-mp.register_script_message("yomipv-sync-selection", function(text)
-	msg.info("Received selection sync: " .. tostring(text))
-	handler:sync_selection(text)
-end)
-
-mp.register_script_message("yomipv-dictionary-selected", function(text)
-	msg.info("Received dictionary selection")
-	handler:set_selected_dictionary(text)
-end)
-
-mp.register_script_message("yomipv-active-entry", function(expression, reading)
-	msg.info("Active entry: " .. tostring(expression) .. " / " .. tostring(reading))
-	handler:set_active_entry(expression, reading)
-end)
-
 msg.info("Yomipv v" .. yomipv_version .. ": Initialized")
 Player.notify("Yomipv v" .. yomipv_version .. " loaded", "success", 2)
 
 mp.add_hook("on_pre_shutdown", 50, function()
 	msg.info("Sending shutdown signal to lookup app")
-	mp.command_native_async({
+	mp.command_native({
 		name = "subprocess",
 		playback_only = false,
-		args = {
-			Platform.get_curl_cmd(),
-			"-s",
-			"-X",
-			"POST",
-			"--connect-timeout",
-			"1",
-			"http://127.0.0.1:19634/shutdown",
-		},
+		args = { Platform.get_curl_cmd(), "-s", "-X", "POST", "http://127.0.0.1:19634/shutdown" },
 	})
 end)
