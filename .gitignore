@@ -1,4 +1,14 @@
-node_modules/
-Yomipv/
+# Abaikan folder repo lama atau backup
+temp_yomipv/
+
+# Abaikan node_modules di dalam folder yomipv
+scripts/yomipv/lookup-app/node_modules/
+
+# Abaikan log dan sampah OS
 *.log
 .DS_Store
+**/.DS_Store
+node_modules/
+
+# Abaikan folder sampah mpv
+watch_later/
