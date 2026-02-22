@@ -8,7 +8,7 @@ function Collections.unpack(arr)
 	if not arr then
 		return
 	end
-	return unpack(arr)
+	return (table.unpack or unpack)(arr)
 end
 
 -- Creates deep copy of table

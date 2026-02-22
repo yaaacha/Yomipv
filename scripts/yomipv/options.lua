@@ -1,5 +1,7 @@
 --[[ Default options ]]
 
+local mp = require("mp")
+
 local default_options = {
 
 	--[[ Anki settings ]]
@@ -165,6 +167,7 @@ local default_options = {
 	key_selector_right = "RIGHT",
 	key_selector_up = "UP",
 	key_selector_down = "DOWN",
+	key_toggle_picture_animated = "g",
 	key_expand_prev = "Shift+LEFT",
 	key_expand_next = "Shift+RIGHT",
 	key_selection_next = "Ctrl+RIGHT",
@@ -209,5 +212,44 @@ local default_options = {
 local options = default_options
 local mp_options = require("mp.options")
 mp_options.read_options(options, "yomipv")
+
+function options.save(key, value)
+	local path = mp.find_config_file("script-opts/yomipv.conf")
+	if not path then
+		path = mp.command_native({ "expand-path", "~~/script-opts/yomipv.conf" })
+	end
+	if not path then
+		return false
+	end
+
+	local file = io.open(path, "r")
+	if not file then
+		return false
+	end
+
+	local lines = {}
+	local updated = false
+	for line in file:lines() do
+		if line:match("^%s*" .. key .. "%s*=") then
+			local val_str = type(value) == "boolean" and (value and "yes" or "no") or tostring(value)
+			line = key .. "=" .. val_str
+			updated = true
+		end
+		table.insert(lines, line)
+	end
+	file:close()
+
+	if updated then
+		file = io.open(path, "w")
+		if file then
+			for _, line in ipairs(lines) do
+				file:write(line .. "\n")
+			end
+			file:close()
+			return true
+		end
+	end
+	return false
+end
 
 return options

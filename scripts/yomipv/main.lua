@@ -162,6 +162,18 @@ if config.selector_show_history then
 	end)
 end
 
+if config.key_toggle_picture_animated ~= "" then
+	mp.add_key_binding(config.key_toggle_picture_animated, "yomipv-toggle-picture-animated", function()
+		config.picture_animated = not config.picture_animated
+		config.save("picture_animated", config.picture_animated)
+		local status = config.picture_animated and "Enabled" or "Disabled"
+		Player.notify("Animated pictures: " .. status, "info")
+		if history and history.active then
+			history:update(true)
+		end
+	end)
+end
+
 mp.register_script_message("yomipv-sync-selection", function(text)
 	msg.info("Received selection sync: " .. tostring(text))
 	handler:sync_selection(text)

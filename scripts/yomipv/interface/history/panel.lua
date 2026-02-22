@@ -83,6 +83,14 @@ function History:handle_click()
 				self:clear_history()
 				return true
 			end
+			if box.id == "toggle_anim" then
+				self.config.picture_animated = not self.config.picture_animated
+				self.config.save("picture_animated", self.config.picture_animated)
+				local status = self.config.picture_animated and "Enabled" or "Disabled"
+				Player.notify("Animated pictures: " .. status, "info")
+				self:update(true)
+				return true
+			end
 			if box.entry then
 				if self.exporter_handler and self.exporter_handler.expand_to_subtitle then
 					self.exporter_handler:expand_to_subtitle(box.entry)

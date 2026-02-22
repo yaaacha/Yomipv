@@ -326,6 +326,26 @@ function Renderer.draw(state, osd, scale, ow, oh)
 		:color("ffffff")
 		:bold(header_text)
 
+	-- Draw GIF toggle button
+	local is_animated = state.config.picture_animated
+	local anim_text = is_animated and "GIF: ON" or "GIF: OFF"
+	local anim_color = state.hovered_id == "toggle_anim" and "ffffff" or (is_animated and "ffffff" or "CCCCCC")
+
+	osd
+		:new_event()
+		:pos(x1 + (width / 2), y1 + 16 * scale, true, 5) -- 5 is top-center alignment
+		:size((state.config.history_font_size or 15) + 3 * scale)
+		:color(anim_color)
+		:bold(anim_text)
+
+	table.insert(state.hit_boxes, {
+		id = "toggle_anim",
+		x1 = x1 + (width / 2) - 40 * scale,
+		y1 = y1,
+		x2 = x1 + (width / 2) + 40 * scale,
+		y2 = y1 + header_h,
+	})
+
 	-- Draw Clear button
 	osd:new_event()
 		:pos(x2 - 10 * scale, y1 + 16 * scale, true, 6)
