@@ -73,63 +73,6 @@ function Platform.normalize_path(path)
 	return path
 end
 
-<<<<<<< HEAD
--- Launcher implementation for Electron frontend
-function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
-	local normalized_path = Platform.normalize_path(app_path)
-
-	if Platform.IS_WINDOWS then
-		local start_ps1 = normalized_path .. "\\start_lookup.ps1"
-
-		local cmd_args = {
-			"powershell.exe",
-			"-NoProfile",
-			"-ExecutionPolicy",
-			"Bypass",
-			"-File",
-			start_ps1,
-			"-mpvPid",
-			tostring(mpv_pid),
-			"-ipcPipe",
-			ipc_pipe or "",
-		}
-
-		msg.info("Starting lookup app via PowerShell for PID: " .. tostring(mpv_pid))
-
-		mp.command_native_async({
-			name = "subprocess",
-			playback_only = false,
-			detach = true,
-			args = cmd_args,
-		}, callback)
-	else
-		local start_sh = normalized_path .. "/start_lookup.sh"
-
-		-- Make script executable first
-		mp.command_native_async({
-			name = "subprocess",
-			playback_only = false,
-			args = { "chmod", "+x", start_sh },
-		}, function()
-			-- Launch the script
-			local cmd_args = {
-				"/bin/bash",
-				start_sh,
-				tostring(mpv_pid),
-				ipc_pipe or "",
-			}
-
-			msg.info("Starting lookup app via bash for PID: " .. tostring(mpv_pid))
-
-			mp.command_native_async({
-				name = "subprocess",
-				playback_only = false,
-				detach = true,
-				args = cmd_args,
-			}, callback)
-		end)
-	end
-=======
 function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
     local normalized_path = Platform.normalize_path(app_path)
     local cb = callback or function() end
@@ -161,7 +104,6 @@ function Platform.launch_electron_app(app_path, mpv_pid, ipc_pipe, callback)
             args = cmd_args
         }, cb)
     end
->>>>>>> 82f8435 (Fix macOS pathing and Lua table error)
 end
 
 function Platform.get_null_device()

@@ -356,18 +356,30 @@ function Handler:handle_anki_fields_result(context, selected_token, data, error)
 	msg.info("Available Yomitan markers in entry: " .. table.concat(markers_found, ", "))
 
 	Player.notify("Yomitan: Capturing media...")
-	self.deps.anki:get_media_path(function(media_dir, media_err)
-		if media_err or not media_dir or media_dir == "" then
-			msg.error("Anki media path error: " .. tostring(media_err))
-			return Player.notify("Error: Cannot access Anki media folder.", "error", 4)
-		end
+    self.deps.anki:get_media_path(function(media_dir, media_err)
+        if media_err or not media_dir or media_dir == "" then
+            msg.error("Anki media path error: " .. tostring(media_err))
+            return Player.notify("Error: Cannot access Anki media folder.", "error", 4)
+        end
 
-		self.deps.media.set_output_dir(media_dir)
-		local picture = self.deps.media.picture.create_job(context.sub)
-		local audio = self.deps.media.audio.create_job(context.sub)
+        self.deps.media.set_output_dir(media_dir)
 
-		self:capture_media(context, entry, data, picture, audio, selected_token)
-	end)
+        -- Sub delay from mpv
+        local sub_delay = mp.get_property_number("sub-delay", 0)
+        
+        local adjusted_sub = {
+            start = context.sub.start + sub_delay,
+            ["end"] = context.sub["end"] + sub_delay,
+            primary_sid = context.sub.primary_sid,
+            secondary_sid = context.sub.secondary_sid
+        }
+
+        -- Use adjusted sub for audio and picture
+        local picture = self.deps.media.picture.create_job(adjusted_sub)
+        local audio = self.deps.media.audio.create_job(adjusted_sub)
+
+        self:capture_media(context, entry, data, picture, audio, selected_token)
+    end)
 end
 
 function Handler:capture_media(context, entry, data, picture, audio, selected_token)
