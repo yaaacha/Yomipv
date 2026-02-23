@@ -1,5 +1,5 @@
---- Bash Startup Check: Tue Feb 24 04:59:08 WIB 2026 ---
+--- Bash Startup Check: Tue Feb 24 05:44:36 WIB 2026 ---
 Script Dir: /Users/macbookair/.config/mpv/scripts/yomipv/lookup-app
-MPV PID: 13713
+MPV PID: 20466
 [INFO] Starting Lookup App...
-[INFO] Lookup App process started with PID 13722. Logs at lookup_app_stdout.log and lookup_app_stderr.log
+[INFO] Lookup App process started with PID 20498. Logs at lookup_app_stdout.log and lookup_app_stderr.log

@@ -1,24 +1,4 @@
-[IPC] Connecting to: function: 0x011ac7e5c0
+[IPC] Connecting to: function: 0x011cd4cf58
 [IPC] mpv connection closed
-[INFO] Monitoring parent PID: 13713
-Lookup IPC server listening on 19634
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
-[IPC] Request: POST /hide
-[IPC] Hide signal received
+[INFO] Monitoring parent PID: 20466
+Address in use, exiting...
