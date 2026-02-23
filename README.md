@@ -1,4 +1,4 @@
-# Yomipv
+# Yomipv (Mac-Compatible Edition)
 
 Yomipv is a script that combines Yomitan with MPV to create anki cards from Japanese media without leaving the player.
 There's no need to do alt tabs to switch between MPV, texthooker and Yomitan while mining or doing word lookups. 
@@ -16,28 +16,36 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 - **curl** (Usually pre-installed on Windows, used for API requests)
 - **[Hianime Plugin](https://github.com/yaaacha/yt-dlp-hianime)** for mpv
 
-## Installation
+Yomipv combines Yomitan with MPV to create Anki cards directly from Japanese media. This version is specifically optimized for **MacOS** and **HiAnime streaming stability**.
 
-1. **Clone the repository** to your MPV directory and install dependencies **(make sure you have Node.js installed)**:
-   - MacOS: `~/.config/mpv/`
-     ```
-     git clone https://github.com/yaaacha/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
-     ```
-     
-   - Windows: `%APPDATA%/mpv/`
-     ```
-     git clone https://github.com/yaaacha/Yomipv && xcopy /e /i /y Yomipv . && rd /s /q Yomipv && cd scripts\yomipv\lookup-app && npm install
-     ```
-   
-   - Linux: `~/.config/mpv/`
-     ```
-     git clone https://github.com/yaaacha/Yomipv && cp -rn Yomipv/* . && rm -rf Yomipv && cd scripts/yomipv/lookup-app && npm install
-     ```
-     
-3. **Configure Settings**:
+## 🚀 Quick Setup (MacOS/Linux)
+
+1. **Clone and Run Setup**:
+   ```bash
+   git clone [https://github.com/yaaacha/Yomipv](https://github.com/yaaacha/Yomipv) ~/.config/mpv/yomipv-temp
+   cp -rn ~/.config/mpv/yomipv-temp/* ~/.config/mpv/
+   rm -rf ~/.config/mpv/yomipv-temp
+   cd ~/.config/mpv && chmod +x setup.sh && ./setup.sh
+   ```
+2. Refresh Terminal: source ~/.zshrc (or restart your terminal).
+3. Start Mining: Just type yomipv.
+
+✨ New Features in this Branch
+- Streaming Stability: Uses internal screenshot mode to bypass connection resets on sites like HiAnime.
+- Audio Padding: No more cut-off audio! Configurable start/end padding via yomipv.conf.
+- Easy Launch: Integrated lookup app launch via a single terminal command.
+
+## **Configure Settings**:
    - Open `script-opts/yomipv.conf` and update your Anki deck/note type names and field mappings.
+   
+### Audio Padding
+    If your audio clips feel too short, change this configuration:
+```
+audio_padding_start=0.2
+audio_padding_end=0.3
+```
 
-4. **External Services**:
+## **External Services**:
    - Ensure Anki is running with AnkiConnect enabled.
    - Ensure Yomitan Api is running and the browser where the Yomitan extension is installed is open, and you have dictionaries installed.
 
@@ -45,15 +53,12 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 
 ### Basic Workflow
 
-1. Open Terminal and insert this script
-   ```
-   cd ~/.config/mpv/Yomipv/scripts/yomipv/lookup-app && npm start
-   ```
-2. Open new tab terminal (press Cmd+t) and type `mpv` to start mpv
-3. Drag and drop video with subtitle or copy hianime link then press `ctrl(⌃)+v`
-4. Press **`c`** to activate the word selector
-5. Navigate with **arrow keys** or **mouse hover** to select a word
-6. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card
+1. Type yomipv in terminal.
+2. Press Ctrl+V to paste a HiAnime link or drop a local file.
+3. c: Open word selector.
+4. Enter: Export to Anki.
+5. a: Toggle History panel.
+6. Ctrl+c: Real-time dictionary lookup.
 
 ### Advanced Features
 
@@ -61,8 +66,8 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
   - Press `Shift+C` to enter append mode, `c` to start the word selector, or `Shift+C` again to cancel
 
 - **Selection Expansion**:
-  - **`Ctrl+Left`** / **`Ctrl+Right`**: Expand selection to adjacent words
-  - **`Shift+Left`** / **`Shift+Right`**: Expand to previous/next subtitle line
+  - **Alt + Left/Right (Mac: ⌥ Option)**: Expand selection to adjacent words.
+  - **`Shift + Left/Right`**: Expand to previous/next subtitle line
 
 - **Word Splitting (`s` or right-click)**: Split compound words into smaller segments
 
