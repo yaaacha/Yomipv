@@ -2,15 +2,17 @@
 
 local mp = require("mp")
 local utils = require("mp.utils")
-
 local msg = require("mp.msg")
 local StringOps = require("lib.string_ops")
-
 local Platform = require("lib.platform")
 
 local MediaUtils = {}
-
 local binary_cache = {}
+
+function MediaUtils.get_adjusted_time(base_time)
+	local sub_delay = mp.get_property_number("sub-delay") or 0
+	return base_time + sub_delay
+end
 
 -- Resolve executable path from local script directory or system path
 function MediaUtils.resolve_binary(binary_name)
@@ -32,7 +34,6 @@ function MediaUtils.resolve_binary(binary_name)
 		}
 
 		for _, portable_path in ipairs(search_paths) do
-			msg.info("Checking portable path: " .. portable_path)
 			local file = io.open(portable_path, "r")
 			if file then
 				file:close()
@@ -52,35 +53,21 @@ function MediaUtils.to_timestamp_str(seconds)
 	return StringOps.to_timestamp(seconds)
 end
 
--- Map 0-100 quality to 0-63 CRF value
 function MediaUtils.map_avif_crf(quality)
-	if not quality or quality < 0 then
-		return 32
-	end
-	if quality > 100 then
-		quality = 100
-	end
-
+	if not quality or quality < 0 then return 32 end
+	if quality > 100 then quality = 100 end
 	return math.floor(63 - (quality / 100) * 63)
 end
 
--- Map 0-100 quality to 2-31 qscale value
 function MediaUtils.map_jpeg_qscale(quality)
-	if not quality or quality < 0 then
-		return 15
-	end
-	if quality > 100 then
-		quality = 100
-	end
-
+	if not quality or quality < 0 then return 15 end
+	if quality > 100 then quality = 100 end
 	return math.floor(31 - (quality / 100) * 29)
 end
 
--- Timestamp-based unique filename generation
 function MediaUtils.generate_filename(prefix, extension, show_ms)
 	local timestamp = os.time()
 	local ms = show_ms and string.format("_%03d", math.floor((os.clock() % 1) * 1000)) or ""
-
 	return string.format("%s_%d%s.%s", prefix, timestamp, ms, extension)
 end
 
@@ -89,11 +76,15 @@ function MediaUtils.sanitize_path(component)
 end
 
 function MediaUtils.is_remote_path(path)
-	if not path or path == "" then
-		return false
-	end
-	-- Match common protocols: http, https, ytdl, edl, etc.
+	if not path or path == "" then return false end
 	return path:find("^%w+://") ~= nil
+end
+
+function MediaUtils.get_stream_args()
+	return {
+		"-user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"-headers", "Referer: https://hianime.to/\r\n"
+	}
 end
 
 return MediaUtils

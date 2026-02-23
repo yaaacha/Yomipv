@@ -1,8 +1,8 @@
-[IPC] Connecting to: function: 0x011b05af10
+[IPC] Connecting to: function: 0x0119235fb0
 [IPC] mpv connection closed
-[INFO] Monitoring parent PID: 35377
+[INFO] Monitoring parent PID: 63570
 Lookup IPC server listening on 19634
-[IPC] Request: POST /hide
-[IPC] Hide signal received
+[IPC] Request: POST /
+[IPC] Lookup for: 棺桶
 [IPC] Request: POST /hide
 [IPC] Hide signal received
