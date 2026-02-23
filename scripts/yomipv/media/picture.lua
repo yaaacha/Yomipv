@@ -73,41 +73,39 @@ function Picture.create_job(subtitle)
 	end
 
 	function job:run()
-		msg.info(
-			string.format(
-				"Starting picture extraction: %s (timestamp: %.3f, duration: %.3f)",
-				target_file,
-				timestamp,
-				duration
-			)
-		)
+    msg.info("Starting internal picture extraction: " .. target_file)
 
-		local encoder = MpvEncoder
-		if Picture.config.picture_use_ffmpeg and not MediaUtils.is_remote_path(source) then
-			encoder = require("media.extraction.ffmpeg")
-		end
-
-		local args = encoder.generate_picture_args(Picture.config, source, target_file, timestamp, duration)
-
-		mp.command_native_async({
-			name = "subprocess",
-			playback_only = false,
-			args = args,
-		}, function(success, result, error)
-			msg.info("Picture args: " .. utils.to_string(args))
-			if success and result.status == 0 then
-				msg.info("Picture extracted: " .. filename)
-				if self.on_finish_callback then
-					self.on_finish_callback(true)
-				end
-			else
-				msg.error("Picture extraction failed: " .. tostring(error or result.status))
-				if self.on_finish_callback then
-					self.on_finish_callback(false)
-				end
-			end
-		end)
-	end
+    if Picture.config.picture_use_ffmpeg and not MediaUtils.is_remote_path(mp.get_property("path")) then
+        local encoder = require("media.extraction.ffmpeg")
+        local args = encoder.generate_picture_args(Picture.config, mp.get_property("path"), target_file, timestamp, duration)
+        
+        mp.command_native_async({
+            name = "subprocess",
+            playback_only = false,
+            args = args,
+        }, function(success, result, error)
+            if success and result.status == 0 then
+                if self.on_finish_callback then self.on_finish_callback(true) end
+            else
+                if self.on_finish_callback then self.on_finish_callback(false) end
+            end
+        end)
+    else
+	
+        local original_time = mp.get_property_number("time-pos")
+        
+        mp.set_property_number("time-pos", timestamp)
+        
+        mp.add_timeout(0.05, function()
+            mp.commandv("screenshot-to-file", target_file, "video")
+            msg.info("Internal screenshot saved: " .. self.target_file)
+            
+            mp.set_property_number("time-pos", original_time)
+            
+            if self.on_finish_callback then self.on_finish_callback(true) end
+        end)
+    end
+end
 
 	return job
 end

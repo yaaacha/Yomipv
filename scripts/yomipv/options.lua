@@ -131,6 +131,8 @@ local default_options = {
 	audio_bitrate = "64k",
 	filename_show_ms = true, -- Include milliseconds in filenames
 	audio_match_volume = false, -- Match extracted audio volume to mpv volume
+	audio_padding_start = 0.1,
+	audio_padding_end = 0.3,
 
 	--[[ Selector settings ]]
 
