@@ -41,14 +41,16 @@ Core dependencies
    # Navigate to mpv config directory
    cd ~/.config/mpv
 
-   # Clone the repository directly here
-   git clone [https://github.com/yaaacha/Yomipv.git](https://github.com/yaaacha/Yomipv.git) .
+   # Clone the specific mac-compatibility branch directly into the current folder
+   git clone -b mac-hianime-compatibility https://github.com/yaaacha/Yomipv.git .
 
    # Run the setup script
    chmod +x setup.sh
    ./setup.sh
    ```
    Note: Using . at the end of git clone will extract files directly into the current folder instead of creating a subfolder.
+   > [!IMPORTANT]
+   > We are using the -b mac-hianime-compatibility flag to ensure you get the optimized version for MacOS.
    
 ## ⚠️ MacOS Compatibility Fixes (Internal Updates)
    If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
