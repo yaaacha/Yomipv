@@ -133,6 +133,68 @@ if config.selector_show_history then
 	end)
 end
 
+if config.key_toggle_picture_animated ~= "" then
+	mp.add_key_binding(config.key_toggle_picture_animated, "yomipv-toggle-picture-animated", function()
+		config.picture_animated = not config.picture_animated
+		config.save("picture_animated", config.picture_animated)
+		local status = config.picture_animated and "Enabled" or "Disabled"
+		Player.notify("Animated pictures: " .. status, "info")
+		if history and history.active then
+			history:update(true)
+		end
+	end)
+end
+
+if config.key_set_timing_start ~= "" then
+	mp.add_key_binding(config.key_set_timing_start, "yomipv-set-timing-start", function()
+		handler:set_manual_start()
+	end)
+end
+
+if config.key_set_timing_end ~= "" then
+	mp.add_key_binding(config.key_set_timing_end, "yomipv-set-timing-end", function()
+		handler:set_manual_end()
+	end)
+end
+
+if config.key_clear_timings ~= "" then
+	mp.add_key_binding(config.key_clear_timings, "yomipv-clear-timings", function()
+		handler:clear_manual_timings()
+	end)
+end
+
+if config.key_sub_seek_next ~= "" then
+	mp.add_key_binding(config.key_sub_seek_next, "yomipv-sub-seek-next", function()
+		mp.commandv("sub-seek", "1")
+	end)
+end
+
+if config.key_sub_seek_prev ~= "" then
+	mp.add_key_binding(config.key_sub_seek_prev, "yomipv-sub-seek-prev", function()
+		mp.commandv("sub-seek", "-1")
+	end)
+end
+
+mp.register_script_message("yomipv-sync-selection", function(text)
+	msg.info("Received selection sync: " .. tostring(text))
+	handler:sync_selection(text)
+end)
+
+mp.register_script_message("yomipv-sync-selection-hint", function(text)
+	msg.info("Received selection hint sync: " .. tostring(text))
+	handler:sync_selection_hint(text)
+end)
+
+mp.register_script_message("yomipv-dictionary-selected", function(text)
+	msg.info("Received dictionary selection")
+	handler:set_selected_dictionary(text)
+end)
+
+mp.register_script_message("yomipv-active-entry", function(expression, reading)
+	msg.info("Active entry: " .. tostring(expression) .. " / " .. tostring(reading))
+	handler:set_active_entry(expression, reading)
+end)
+
 msg.info("Yomipv v" .. yomipv_version .. ": Initialized")
 Player.notify("Yomipv v" .. yomipv_version .. " loaded", "success", 2)
 
