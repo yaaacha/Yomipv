@@ -3,6 +3,7 @@ temp_yomipv/
 
 # Abaikan node_modules di dalam folder yomipv
 scripts/yomipv/lookup-app/node_modules/
+scripts/yomipv/lookup-app/*.log
 
 # Abaikan log dan sampah OS
 *.log
