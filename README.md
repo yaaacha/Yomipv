@@ -69,35 +69,56 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 	  | :---: | :---: | :--- |
 	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
 	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
-	  [!TIP]
-	  Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
+	  
+	  > [!TIP]
+	  > Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
 	  
 ## ⌨️ Default Keybindings
    | Shortcut | Action |
-   | :--- | :---: |
+   | :---: | :--- |
    | `Ctrl + v` | paste a HiAnime link |
    | `c` | Open word selector |
    | `Arrow Keys or Mouse hover` | Word selection navigating |
    | `Enter/return` | Export to Anki (when selector is open) |
    | `a` | Toggle subtitle history panel |
    | `Ctrl + c` | Dictionary lookup |
-   | `Alt/Opt (Mac) + 1 | Stream Mode |
-   | `Alt/Opt (Mac) + 2 | Local Mode|
+   | `Alt/Opt (Mac) + 1` | Stream Mode |
+   | `Alt/Opt (Mac) + 2` | Local Mode|
    
 ### ⌨️ Advanced Features
-   | :---: |
-   | Append Mode |
-   | :--- | :---: |
-   | `Shift + c` | Enter append mode |
-   | `c` | Start word selector |
-   | `Shift + c` | Cancel word selector |
-   | :---: |
-   | Selection Expansion |
-   | :--- | :---: |
-   | `s` | Word Splitting (after entering word selector) | 
-   | `Alt/Opt (Mac) + Left/Right` | Expand selection to adjacent words |
-   | `Shift + Left/Right` | Expand to previous/next subtitle line |
-   | `Shift + c` | Cancel word selector |   
+
+   <table>
+  <tr>
+    <th colspan="2" align="center">Append Mode</th>
+  </tr>
+  <tr>
+    <td><code>Shift + c</code></td>
+    <td>Enter append mode</td>
+  </tr>
+  <tr>
+    <td><code>c</code></td>
+    <td>Start word selector</td>
+  </tr>
+  <tr>
+    <td><code>Shift + c</code></td>
+    <td>Cancel word selector</td>
+  </tr>
+  <tr>
+    <th colspan="2" align="center">Selection Expansion</th>
+  </tr>
+  <tr>
+    <td><code>s</code></td>
+    <td>Word Splitting (after entering word selector)</td>
+  </tr>
+  <tr>
+    <td><code>Alt/Opt (Mac) + Left/Right</code></td>
+    <td>Expand selection to adjacent words</td>
+  </tr>
+  <tr>
+    <td><code>Shift + Left/Right</code></td>
+    <td>Expand to previous/next subtitle line</td>
+  </tr>
+</table>
 
    
 ## 🛠 Troubleshooting (MacOS)
@@ -108,8 +129,8 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
    | IndentationError | Python Spacing | Ensure 4-space indentation in hianime.py |
    | Image Missing | Missing Libs | Run brew install libwebp libavif |
    
-[!IMPORTANT]
-Active Branch: Always use the mac-hianime-compatibility branch for the latest MacOS fixes.
+> [!IMPORTANT]
+> Active Branch: Always use the mac-hianime-compatibility branch for the latest MacOS fixes.
 
 > [!WARNING]
 > **Linux and Windows Support Not Tested for this version**
