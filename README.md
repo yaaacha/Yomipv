@@ -26,9 +26,8 @@ MacOS uses `SecureTransport` which often conflicts with unofficial streams. To e
 
 ### Installation via Homebrew:
 Core dependencies
-	```
+
 	brew install ffmpeg mpv node libwebp libavif
-	```
    
 ## Quick Setup (MacOS/Linux)
 
@@ -50,31 +49,9 @@ Core dependencies
    ```
    Note: Using . at the end of git clone will extract files directly into the current folder instead of creating a subfolder.
 > [!IMPORTANT]
-> > We are using the -b mac-hianime-compatibility flag to ensure you get the optimized version for MacOS.
-   
-## ⚠️ MacOS Compatibility Fixes (Internal Updates)
-   If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
-   1. **Updated mpv.conf**
-      Recent updates moved headers directly into the config to stabilize the connection:
-	  ```
-	  tls-verify=no
-	  user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-	  http-header-fields="Referer: https://megacloud.blog/"
-	  ```
-   2. **[HiAnime Plugin Optimization](https://github.com/yaaacha/yt-dlp-hianime)**
-      The included hianime.py extractor has been modified to:
-	  - Force sub server for consistent Japanese audio.
-	  - Hardcode ja language metadata for Yomitan recognition.
-	  - Inject Referer and Origin headers into every M3U8 segment request.
-   3. **Stream and Local Profile**
-      Different modes require different handling for audio and image extraction to avoid "Status 2" or TLS errors on MacOS.
-	  | Profile Name | Usage Scenario | Key Settings
-	  | :---: | :---: | :--- |
-	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
-	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
-	  
-	  > [!TIP]
-	  > Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
+> We are using the -b mac-hianime-compatibility flag to ensure you get the optimized version for MacOS.
+
+2. After this setup, you can start Yomipv with just type `yomipv` in terminal
 	  
 ## ⌨️ Default Keybindings
    | Shortcut | Action |
@@ -122,7 +99,31 @@ Core dependencies
     <td>Expand to previous/next subtitle line</td>
   </tr>
 </table>
+For more configuration, check `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
 
+## ⚠️ MacOS Compatibility Fixes (Internal Updates)
+   If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
+   1. **Updated mpv.conf**
+      Recent updates moved headers directly into the config to stabilize the connection:
+	  ```
+	  tls-verify=no
+	  user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+	  http-header-fields="Referer: https://megacloud.blog/"
+	  ```
+   2. **[HiAnime Plugin Optimization](https://github.com/yaaacha/yt-dlp-hianime)**
+      The included hianime.py extractor has been modified to:
+	  - Force sub server for consistent Japanese audio.
+	  - Hardcode ja language metadata for Yomitan recognition.
+	  - Inject Referer and Origin headers into every M3U8 segment request.
+   3. **Stream and Local Profile**
+      Different modes require different handling for audio and image extraction to avoid "Status 2" or TLS errors on MacOS.
+	  | Profile Name | Usage Scenario | Key Settings
+	  | :---: | :---: | :--- |
+	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
+	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
+	  
+> [!TIP]
+> Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
    
 ## 🛠 Troubleshooting (MacOS)
    | Error Code | Cause | Solution |
@@ -138,3 +139,20 @@ Core dependencies
 > [!WARNING]
 > **Linux and Windows Support Not Tested for this version**
 > This script has primarily been developed and tested on Windows and modified on MacOS. While cross-platform support is intended, Linux and Windows users may encounter issues. Please report any bugs or compatibility problems.
+
+# 🏛 Acknowledgements
+Yomipv (Mac-Compatible Edition) was made possible by open source software and the work of its contributors. This project relies on the following components:
+	
+| Software | License | Role|
+| :---: | :---: | :--- |
+| [Yomipv](https://github.com/BrenoAqua/Yomipv) | GPL-3.0 | Core mining script |
+| [mpv](https://github.com/mpv-player/mpv) | GPL-2.0 | Primary media player |
+| [ffmpeg](https://github.com/FFmpeg/FFmpeg) | LGPL-2.1 | Audio and image extraction |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Unlicensed | Video downloader backend |
+| [yt-dlp-hianime](https://github.com/pratikpatel8982/yt-dlp-hianime) | Unlicensed | Original HiAnime streaming support |
+| [curl](https://curl.se/download.html) | MIT | API request handling |
+| [Node.js](https://nodejs.org/en/download/current) | MIT | Lookup app backend |
+| [thumbfast](https://github.com/po5/thumbfast) | MPL-2.0 | Thumbnailer script for mpv |
+| [uosc](https://github.com/tomasklaen/uosc) | LGPL-2.1 | Feature-rich minimalist proximity-based UI for MPV player |
+| [autoload](https://github.com/mpv-player/mpv/blob/master/TOOLS/lua/autoload.lua) | GPL-2.0 | autoload playlist in folder |
+| [save playlist](https://github.com/NaiveInvestigator/save-playlist) | Unlicensed | saving playlist compatible with autoload lua |
