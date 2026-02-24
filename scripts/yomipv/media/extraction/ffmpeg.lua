@@ -6,8 +6,17 @@ FFmpegEncoder.exec = MediaUtils.resolve_binary("ffmpeg")
 
 local function get_input_args(source, start_time)
     local args = {}
-    table.insert(args, "-headers")
-    table.insert(args, "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\nReferer: https://hianime.to/\r\n")
+    
+    local is_http = source:sub(1, 4) == "http"
+
+    if is_http then
+        table.insert(args, "-user_agent")
+        table.insert(args, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        
+        table.insert(args, "-headers")
+        table.insert(args, "Referer: https://hianime.to/\r\n")
+    end
+    
     table.insert(args, "-ss")
     table.insert(args, MediaUtils.to_timestamp_str(start_time or 0))
     table.insert(args, "-i")
