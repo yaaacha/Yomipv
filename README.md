@@ -19,43 +19,42 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 | **HiAnime Plugin** | Anime streaming support | Required for Streaming ([Plugin Link](https://github.com/yaaacha/yt-dlp-hianime)) |
 
 ## 🛠 MacOS Requirements & Setup
-	
-	MacOS uses `SecureTransport` which often conflicts with unofficial streams. To ensure smooth playback and image processing (WebP/AVIF):
-		1. **MPV Configuration**: You **must** disable TLS verification in your `mpv.conf` to prevent `-9806` errors.
-		2. **Curl**: macOS comes with `curl` pre-installed. Verify by typing `curl --version` in Terminal. If missing, install via `brew install curl`.
-		3. **Image Support**: To support WebP/AVIF for Anki cards, ensure FFmpeg is installed with proper libraries.
+MacOS uses `SecureTransport` which often conflicts with unofficial streams. To ensure smooth playback and image processing (WebP/AVIF):
+1. **MPV Configuration**: You **must** disable TLS verification in your `mpv.conf` to prevent `-9806` errors.
+2. **Curl**: macOS comes with `curl` pre-installed. Verify by typing `curl --version` in Terminal. If missing, install via `brew install curl`.
+3. **Image Support**: To support WebP/AVIF for Anki cards, ensure FFmpeg is installed with proper libraries.
 
 ### Installation via Homebrew:
-	Core dependencies
-		```
-		brew install ffmpeg mpv node libwebp libavif
-		```
+Core dependencies
+	```
+	brew install ffmpeg mpv node libwebp libavif
+	```
    
 ## Quick Setup (MacOS/Linux)
 
 1. **Clone and Run Setup**:
    Open Terminal
-		```bash
-		# Create mpv directory if it doesn't exist
-		mkdir -p ~/.config/mpv
-		
-		# Navigate to mpv config directory
-		cd ~/.config/mpv
-		
-		# Clone the repository directly here
-		git clone [https://github.com/yaaacha/Yomipv.git](https://github.com/yaaacha/Yomipv.git) .
-		
-		# Run the setup script
-		chmod +x setup.sh
-		./setup.sh
-		```
+   ```
+   # Create mpv directory if it doesn't exist
+   mkdir -p ~/.config/mpv
+
+   # Navigate to mpv config directory
+   cd ~/.config/mpv
+
+   # Clone the repository directly here
+   git clone [https://github.com/yaaacha/Yomipv.git](https://github.com/yaaacha/Yomipv.git) .
+
+   # Run the setup script
+   chmod +x setup.sh
+   ./setup.sh
+   ```
    Note: Using . at the end of git clone will extract files directly into the current folder instead of creating a subfolder.
    
 ## ⚠️ MacOS Compatibility Fixes (Internal Updates)
    If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
    1. **Updated mpv.conf**
       Recent updates moved headers directly into the config to stabilize the connection:
-	  ```bash
+	  ```
 	  tls-verify=no
 	  user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 	  http-header-fields="Referer: https://megacloud.blog/"
