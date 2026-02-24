@@ -26,8 +26,7 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 	3. **Image Support**: To support WebP/AVIF for Anki cards, ensure FFmpeg is installed with proper libraries.
 
 ### Installation via Homebrew:
-	Core dependencies
-	
+	 Core dependencies
 	```
 	brew install ffmpeg mpv node libwebp libavif
 	```
