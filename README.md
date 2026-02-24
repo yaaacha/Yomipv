@@ -1,88 +1,115 @@
 # Yomipv (Mac-Compatible Edition)
 
-Yomipv is a script that combines Yomitan with MPV to create anki cards from Japanese media without leaving the player.
+Yomipv is a script that combines Yomitan with MPV to create Anki cards from Japanese media without leaving the player.
+This version is specifically optimized for MacOS compatibility, fixing common TLS handshake and header issues found on HiAnime/Megacloud.
 There's no need to do alt tabs to switch between MPV, texthooker and Yomitan while mining or doing word lookups. 
 It was made designed to be used with [Senren Note Type v5.0.0](https://github.com/BrenoAqua/Senren), but it should work with any note type.
 
 https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 
-## Requirements
+## 📋 Requirements & Dependencies
 
-- **[MPV](https://mpv.io/)** (0.33.0 or higher)
-- **[FFmpeg](https://ffmpeg.org/)** (Required for media extraction, but fallbacks to mpv's internal encoder if not found)
-- **[Anki](https://apps.ankiweb.net/)** with **[AnkiConnect](https://ankiweb.net/shared/info/2055492159)**
-- **[Yomitan](https://yomitan.wiki/)** and **[Yomitan Api](https://github.com/yomidevs/yomitan-api)**
-- **[Node.js](https://nodejs.org/)** (Required for the lookup app)
-- **curl** (Usually pre-installed on Windows, used for API requests)
-- **[Hianime Plugin](https://github.com/yaaacha/yt-dlp-hianime)** for mpv
+| Tool | Purpose | Status |
+| :--- | :--- | :--- |
+| **Anki** | Flashcard storage | Required (+ [AnkiConnect](https://ankiweb.net/shared/info/2055492159)) |
+| **Yomitan** | Dictionary & Translation | Required ([Browser Extension](https://yomitan.wiki/)) |
+| **Yomitan API** | Bridge between MPV & Yomitan | Required ([Setup Guide](https://github.com/yomidevs/yomitan-api)) |
+| **curl** | Handling API requests | Required (Included in macOS) |
+| **HiAnime Plugin** | Anime streaming support | Required ([Plugin Link](https://github.com/yaaacha/yt-dlp-hianime)) |
 
-Yomipv combines Yomitan with MPV to create Anki cards directly from Japanese media. This version is specifically optimized for **MacOS** and **HiAnime streaming stability**.
+## 🛠 MacOS Requirements & Setup
+	MacOS uses `SecureTransport` which often conflicts with unofficial streams. To ensure smooth playback and image processing (WebP/AVIF):
+	1. **MPV Configuration**: You **must** disable TLS verification in your `mpv.conf` to prevent `-9806` errors.
+	2. **Curl**: macOS comes with `curl` pre-installed. Verify by typing `curl --version` in Terminal. If missing, install via `brew install curl`.
+	3. **Image Support**: To support WebP/AVIF for Anki cards, ensure FFmpeg is installed with proper libraries.
 
-## 🚀 Quick Setup (MacOS/Linux)
+### Installation via Homebrew:
+	```bash
+	# Core dependencies
+	brew install ffmpeg mpv node libwebp libavif
+	```
+   
+## ðŸš€ Quick Setup (MacOS/Linux)
 
 1. **Clone and Run Setup**:
+   Open Terminal
    ```bash
-   git clone [https://github.com/yaaacha/Yomipv](https://github.com/yaaacha/Yomipv) ~/.config/mpv/yomipv-temp
-   cp -rn ~/.config/mpv/yomipv-temp/* ~/.config/mpv/
-   rm -rf ~/.config/mpv/yomipv-temp
-   cd ~/.config/mpv && chmod +x setup.sh && ./setup.sh
-   ```
-2. Refresh Terminal: source ~/.zshrc (or restart your terminal).
-3. Start Mining: Just type yomipv.
-
-✨ New Features in this Branch
-- Streaming Stability: Uses internal screenshot mode to bypass connection resets on sites like HiAnime.
-- Audio Padding: No more cut-off audio! Configurable start/end padding via yomipv.conf.
-- Easy Launch: Integrated lookup app launch via a single terminal command.
-
-## **Configure Settings**:
-   - Open `script-opts/yomipv.conf` and update your Anki deck/note type names and field mappings.
+   # Create mpv directory if it doesn't exist
+   mkdir -p ~/.config/mpv
    
-### Audio Padding
-    If your audio clips feel too short, change this configuration:
-```
-audio_padding_start=0.2
-audio_padding_end=0.3
-```
+   # Navigate to mpv config directory
+   cd ~/.config/mpv
+   
+   # Clone the repository directly here
+   git clone [https://github.com/yaaacha/Yomipv.git](https://github.com/yaaacha/Yomipv.git) .
+   
+   # Run the setup script
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+   Note: Using . at the end of git clone will extract files directly into the current folder instead of creating a subfolder.
+   
+## ⚠️ MacOS Compatibility Fixes (Internal Updates)
+   If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
+   1. **Updated mpv.conf**
+      Recent updates moved headers directly into the config to stabilize the connection:
+	  ```bash
+	  tls-verify=no
+	  user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+	  http-header-fields="Referer: https://megacloud.blog/"
+	  ```
+   2. **[HiAnime Plugin Optimization](https://github.com/yaaacha/yt-dlp-hianime)**
+      The included hianime.py extractor has been modified to:
+	  - Force sub server for consistent Japanese audio.
+	  - Hardcode ja language metadata for Yomitan recognition.
+	  - Inject Referer and Origin headers into every M3U8 segment request.
+   3. **Stream and Local Profile**
+      Different modes require different handling for audio and image extraction to avoid "Status 2" or TLS errors on MacOS.
+	  | Profile Name | Usage Scenario | Key Settings
+	  | :---: | :---: | :--- |
+	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
+	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
+	  [!TIP]
+	  Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
+	  
+## ⌨️ Default Keybindings
+   | Shortcut | Action |
+   | :--- | :---: |
+   | `Ctrl + v` | paste a HiAnime link |
+   | `c` | Open word selector |
+   | `Arrow Keys or Mouse hover` | Word selection navigating |
+   | `Enter/return` | Export to Anki (when selector is open) |
+   | `a` | Toggle subtitle history panel |
+   | `Ctrl + c` | Dictionary lookup |
+   | `Alt/Opt (Mac) + 1 | Stream Mode |
+   | `Alt/Opt (Mac) + 2 | Local Mode|
+   
+### ⌨️ Advanced Features
+   | :---: |
+   | Append Mode |
+   | :--- | :---: |
+   | `Shift + c` | Enter append mode |
+   | `c` | Start word selector |
+   | `Shift + c` | Cancel word selector |
+   | :---: |
+   | Selection Expansion |
+   | :--- | :---: |
+   | `s` | Word Splitting (after entering word selector) | 
+   | `Alt/Opt (Mac) + Left/Right` | Expand selection to adjacent words |
+   | `Shift + Left/Right` | Expand to previous/next subtitle line |
+   | `Shift + c` | Cancel word selector |   
 
-## **External Services**:
-   - Ensure Anki is running with AnkiConnect enabled.
-   - Ensure Yomitan Api is running and the browser where the Yomitan extension is installed is open, and you have dictionaries installed.
-
-## Usage
-
-### Basic Workflow
-
-1. Type yomipv in terminal.
-2. Press Ctrl+V to paste a HiAnime link or drop a local file.
-3. c: Open word selector.
-4. Enter: Export to Anki.
-5. a: Toggle History panel.
-6. Ctrl+c: Real-time dictionary lookup.
-
-### Advanced Features
-
-- **Append Mode (`Shift+C`)**: Select multiple subtitle lines before exporting
-  - Press `Shift+C` to enter append mode, `c` to start the word selector, or `Shift+C` again to cancel
-
-- **Selection Expansion**:
-  - **Alt + Left/Right (Mac: ⌥ Option)**: Expand selection to adjacent words.
-  - **`Shift + Left/Right`**: Expand to previous/next subtitle line
-
-- **Word Splitting (`s` or right-click)**: Split compound words into smaller segments
-
-- **Dictionary Lookup (`Ctrl+c`)**: Open real-time dictionary definitions window that uses your yomitan glossary
-
-- **History Panel (`a`)**: Toggle subtitle history panel
-  - Click on previous/next lines to select them to expand the subtitle lines (when selector is open) or seek to that timestamp (when selector is closed)
-
-There are demos for all features [here](https://github.com/yaaacha/Yomipv/tree/main/features)
-
-## Troubleshooting
-
-### Windows
-- Ensure PowerShell execution policy allows scripts
-- Check that curl is available at `C:\Windows\System32\curl.exe`
+   
+## 🛠 Troubleshooting (MacOS)
+   | Error Code | Cause | Solution |
+   | :---: | :---: | :---: |
+   | Error -9806 / -36 | TLS Handshake failure | Add tls-verify=no to mpv.conf (no --) |
+   | Status 2 | Audio Extraction Failed | Check Referer headers in hianime.py |
+   | IndentationError | Python Spacing | Ensure 4-space indentation in hianime.py |
+   | Image Missing | Missing Libs | Run brew install libwebp libavif |
+   
+[!IMPORTANT]
+Active Branch: Always use the mac-hianime-compatibility branch for the latest MacOS fixes.
 
 > [!WARNING]
 > **Linux and Windows Support Not Tested for this version**
