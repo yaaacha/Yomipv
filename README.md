@@ -12,17 +12,12 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 
 | Tool | Purpose | Status |
 | :--- | :--- | :--- |
+| **MPV** | Media player | Required [Media Player](https://github.com/mpv-player/mpv) |
 | **Anki** | Flashcard storage | Required (+ [AnkiConnect](https://ankiweb.net/shared/info/2055492159)) |
 | **Yomitan** | Dictionary & Translation | Required ([Browser Extension](https://yomitan.wiki/)) |
 | **Yomitan API** | Bridge between MPV & Yomitan | Required ([Setup Guide](https://github.com/yomidevs/yomitan-api)) |
 | **curl** | Handling API requests | Required (Included in macOS) |
 | **HiAnime Plugin** | Anime streaming support | Required for Streaming ([Plugin Link](https://github.com/yaaacha/yt-dlp-hianime)) |
-
-## 🛠 MacOS Requirements & Setup
-MacOS uses `SecureTransport` which often conflicts with unofficial streams. To ensure smooth playback and image processing (WebP/AVIF):
-1. **MPV Configuration**: You **must** disable TLS verification in your `mpv.conf` to prevent `-9806` errors.
-2. **Curl**: macOS comes with `curl` pre-installed. Verify by typing `curl --version` in Terminal. If missing, install via `brew install curl`.
-3. **Image Support**: To support WebP/AVIF for Anki cards, ensure FFmpeg is installed with proper libraries.
 
 ### Installation via Homebrew:
 Core dependencies
@@ -64,6 +59,7 @@ Core dependencies
    | `Ctrl + c` | Dictionary lookup |
    | `Alt/Opt (Mac) + 1` | Stream Mode |
    | `Alt/Opt (Mac) + 2` | Local Mode|
+
 More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).
 More about field handlebar configuration for mining can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/field_handlebars.md).
 
@@ -101,6 +97,7 @@ More about field handlebar configuration for mining can be found [here](https://
     <td>Expand to previous/next subtitle line</td>
   </tr>
 </table>
+
 For more configuration, you can setup for yourself in `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
 
 ## ⚠️ MacOS Compatibility Fixes (Internal Updates)
@@ -129,20 +126,24 @@ For more configuration, you can setup for yourself in `script-opts/yomipv.conf`,
    
 ## 🔄 How to Update
 If you already have Yomipv installed and want to update to the latest version (including the MacOS compatibility fixes), follow these steps:
-Navigate to your MPV directory:
-	cd ~/.config/mpv
-Fetch and Pull the latest changes:
-If you are already on the correct branch, pull the latest updates directly:
-	git pull origin mac-hianime-compatibility
-Switching to the Mac Branch (If you are currently on main):
-If you haven't switched to the optimized MacOS branch yet, run the following commands:
-	git fetch origin
-	git checkout mac-hianime-compatibility
-Re-run Setup (If necessary):
-If there have been updates to the lookup-app or its dependencies, navigate to the folder and run the setup script:
-	cd Yomipv
-	chmod +x setup.sh
-	./setup.sh
+1. Navigate to your MPV directory:
+
+   		cd ~/.config/mpv
+2. Fetch and Pull the latest changes
+   If you are already on the correct branch, pull the latest updates directly:
+
+		git pull origin mac-hianime-compatibility
+3. Switching to the Mac Branch (If you are currently on main).
+   If you haven't switched to the optimized MacOS branch yet, run the following commands:
+   
+   		git fetch origin
+		git checkout mac-hianime-compatibility
+4. Re-run Setup (If necessary).
+   If there have been updates to the lookup-app or its dependencies, navigate to the folder and run the setup script:
+
+   		cd Yomipv
+		chmod +x setup.sh
+		./setup.sh
    
 ## 🛠 Troubleshooting (MacOS)
    | Error Code | Cause | Solution |
