@@ -64,7 +64,9 @@ Core dependencies
    | `Ctrl + c` | Dictionary lookup |
    | `Alt/Opt (Mac) + 1` | Stream Mode |
    | `Alt/Opt (Mac) + 2` | Local Mode|
-   
+More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).
+More about field handlebar configuration for mining can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/field_handlebars.md).
+
 ### ⌨️ Advanced Features
 
    <table>
@@ -99,7 +101,7 @@ Core dependencies
     <td>Expand to previous/next subtitle line</td>
   </tr>
 </table>
-For more configuration, check `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
+For more configuration, you can setup for yourself in `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
 
 ## ⚠️ MacOS Compatibility Fixes (Internal Updates)
    If you encounter Status 2 (Audio extraction failed) or TLS Errors, ensure your configuration matches these recent updates:
@@ -124,6 +126,23 @@ For more configuration, check `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv
 	  
 > [!TIP]
 > Switching Profiles: default profile is stream Mode. You can change mode with assigned shortcut. You define them yourself in your script-opts so Yomipv knows which extraction method to use. You need to restart mpv to change profile.
+   
+## 🔄 How to Update
+If you already have Yomipv installed and want to update to the latest version (including the MacOS compatibility fixes), follow these steps:
+Navigate to your MPV directory:
+	cd ~/.config/mpv
+Fetch and Pull the latest changes:
+If you are already on the correct branch, pull the latest updates directly:
+	git pull origin mac-hianime-compatibility
+Switching to the Mac Branch (If you are currently on main):
+If you haven't switched to the optimized MacOS branch yet, run the following commands:
+	git fetch origin
+	git checkout mac-hianime-compatibility
+Re-run Setup (If necessary):
+If there have been updates to the lookup-app or its dependencies, navigate to the folder and run the setup script:
+	cd Yomipv
+	chmod +x setup.sh
+	./setup.sh
    
 ## 🛠 Troubleshooting (MacOS)
    | Error Code | Cause | Solution |
