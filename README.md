@@ -16,6 +16,7 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 | :--- | :--- | :--- |
 | **MPV** | Media player | Required for [Media Player](https://github.com/mpv-player/mpv) |
 | **[FFmpeg]** | Media Extractor | Required for [Media Extraction](https://ffmpeg.org/) (falls back to MPV's internal encoder if not found) |
+| **MPV** | Media player | Required [Media Player](https://github.com/mpv-player/mpv) |
 | **Anki** | Flashcard storage | Required (+ [AnkiConnect](https://ankiweb.net/shared/info/2055492159)) |
 | **Yomitan** | Dictionary & Translation | Required ([Browser Extension](https://yomitan.wiki/)) |
 | **Yomitan API** | Bridge between MPV & Yomitan | Required ([Setup Guide](https://github.com/yomidevs/yomitan-api)) |
@@ -70,6 +71,21 @@ Core dependencies
 | `Alt/Opt (Mac) + 2` | Local Mode |
 
 More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).  
+
+	  
+## ⌨️ Default Keybindings
+   | Shortcut | Action |
+   | :---: | :--- |
+   | `Ctrl + v` | paste a HiAnime link |
+   | `c` | Open word selector |
+   | `Arrow Keys or Mouse hover` | Word selection navigating |
+   | `Enter/return` | Export to Anki (when selector is open) |
+   | `a` | Toggle subtitle history panel |
+   | `Ctrl + c` | Dictionary lookup |
+   | `Alt/Opt (Mac) + 1` | Stream Mode |
+   | `Alt/Opt (Mac) + 2` | Local Mode|
+
+More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).
 More about field handlebar configuration for mining can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/field_handlebars.md).
 
 ---
@@ -205,7 +221,7 @@ For more configuration, you can customize settings in: `script-opts/yomipv.conf`
 	  - Inject Referer and Origin headers into every M3U8 segment request.
    2. **Stream and Local Profile**
       Different modes require different handling for audio and image extraction to avoid "Status 2" or TLS errors on MacOS.
-	  | Profile Name | Usage Scenario | Key Settings
+	  | Profile Name | Usage Scenario | Key Settings |
 	  | :---: | :---: | :--- |
 	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
 	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
