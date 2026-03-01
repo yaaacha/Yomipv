@@ -16,6 +16,7 @@ local default_options = {
 
 	-- Note fields
 	expression_field = "word",
+	expression_furigana_field = "",
 	reading_field = "reading",
 	pitch_accents_field = "pitchAccents",
 	pitch_position_field = "pitchPositions",
@@ -96,6 +97,7 @@ local default_options = {
 	--[[ Note tagging settings ]]
 
 	-- Target tags for exported notes
+	-- {name}, {season}, {episode}, and {timestamp} can also be used with the note tag
 	note_tag = "アニメ",
 
 	--[[ Picture settings ]]
@@ -140,10 +142,15 @@ local default_options = {
 	selector_show_history = true, -- Include recent lines in selector view
 	selector_hide_ui = true, -- Hide player UI while selector is active
 	selector_navigation_delay = 0.05, -- Input delay between repeated navigation actions
+	selector_trigger_on_mouse_move = false, -- Automatically trigger selector on mouse movement after idle
+	selector_trigger_mouse_idle_time = 5.0, -- Seconds mouse must be idle before movement triggers selector
 
 	-- Lookup
 	selector_lookup_on_hover = false, -- Automatically show lookup on hover
 	selector_lookup_on_navigation = false, -- Automatically show lookup on navigation
+	selector_lookup_delay = 0.1, -- Delay in seconds before triggering lookup
+	selector_mora_hover = true, -- Lookup sub-words while hovering individual characters
+	selector_mora_navigation = false, -- Navigate through individual characters with arrow keys
 	lookup_show_frequencies = true,
 
 	-- Typography
@@ -153,7 +160,8 @@ local default_options = {
 
 	-- Appearance
 	selector_color = "#FFFFFF",
-	selector_selection_color = "#56FF68", -- Color of active term highlight
+	selector_selection_color = "#56FF68",
+	selector_lock_color = "#FFD700",
 	selector_border_color = "#000000",
 	selector_border_size = 2,
 	selector_shadow_color = "#000000",
@@ -177,6 +185,7 @@ local default_options = {
 	key_selection_next = "Alt+RIGHT",
 	key_selection_prev = "Alt+LEFT",
 	key_selector_lookup = "Ctrl+c",
+	key_toggle_mora_navigation = "s",
 	key_append_mode = "C",
 	key_set_timing_start = "",
 	key_set_timing_end = "",

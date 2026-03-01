@@ -119,6 +119,34 @@ mp.add_key_binding(config.key_open_selector, "yomipv-export", function()
 	handler:start_export(history)
 end)
 
+if config.selector_trigger_on_mouse_move then
+	local selector_mouse_idle_start = mp.get_time()
+	local last_mouse_pos_x, last_mouse_pos_y = -1, -1
+
+	mp.add_periodic_timer(0.1, function()
+		if Selector.active then
+			selector_mouse_idle_start = mp.get_time()
+			return
+		end
+
+		local current_time = mp.get_time()
+		local mx, my = mp.get_mouse_pos()
+
+		if last_mouse_pos_x ~= mx or last_mouse_pos_y ~= my then
+			if last_mouse_pos_x ~= -1 and last_mouse_pos_y ~= -1 then
+				local idle_time = current_time - selector_mouse_idle_start
+				if idle_time >= config.selector_trigger_mouse_idle_time then
+					msg.info("Mouse moved after idle, triggering selector")
+					handler:start_export(history)
+				end
+			end
+			last_mouse_pos_x = mx
+			last_mouse_pos_y = my
+			selector_mouse_idle_start = current_time
+		end
+	end)
+end
+
 mp.add_key_binding(config.key_append_mode, "yomipv-toggle-append-mode", function()
 	handler:toggle_mark_range()
 end)
@@ -141,6 +169,19 @@ if config.key_toggle_picture_animated ~= "" then
 		Player.notify("Animated pictures: " .. status, "info")
 		if history and history.active then
 			history:update(true)
+		end
+	end)
+end
+
+if config.key_toggle_mora_navigation ~= "" then
+	mp.add_key_binding(config.key_toggle_mora_navigation, "yomipv-toggle-mora-navigation", function()
+		config.selector_mora_navigation = not config.selector_mora_navigation
+		config.save("selector_mora_navigation", config.selector_mora_navigation)
+		local status = config.selector_mora_navigation and "Enabled" or "Disabled"
+		Player.notify("Mora navigation: " .. status, "info")
+		if Selector.active then
+			Selector.style.selector_mora_navigation = config.selector_mora_navigation
+			Selector:render()
 		end
 	end)
 end

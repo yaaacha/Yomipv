@@ -18,6 +18,7 @@ local DEFAULT_YOMITAN_FIELDS = {
 	"cloze-body",
 	"cloze-suffix",
 	"sentence-furigana",
+	"furigana-plain",
 	"audio",
 	"pitch-accents",
 	"pitch-accent-positions",
@@ -235,7 +236,7 @@ function Handler:initialize_export_context(gui)
 		gui = gui,
 	}
 
-	if self.manual_start and self.manual_end then
+	if self.manual_start or self.manual_end then
 		self:apply_manual_range(context)
 	end
 
@@ -310,14 +311,18 @@ function Handler:handle_selector_result(context, selected_token)
 
 	if not selected_token then
 		msg.info("Selector cancelled")
-		self.manual_start = nil
-		self.manual_end = nil
+		self:refresh_timing_overlay()
 		return
 	end
 
 	if selected_token == "prev_sub" or selected_token == "next_sub" then
 		return
 	end
+
+	-- Clear manual timings immediately once selection is confirmed to prevent stale OSD/overlap
+	self.manual_start = nil
+	self.manual_end = nil
+	self:refresh_timing_overlay()
 
 	local yomitan_fields = self:build_yomitan_fields()
 
@@ -329,9 +334,9 @@ function Handler:handle_selector_result(context, selected_token)
 		)
 	)
 
-	-- Use pending term as fallback if active-entry IPC hasn't arrived yet
-	local effective_expr = self.active_entry_expression or self.pending_lookup_term
-	local effective_reading = self.active_entry_reading or self.pending_lookup_reading
+	-- Only pins an entry when the UI has explicitly synced one
+	local effective_expr = self.active_entry_expression
+	local effective_reading = self.active_entry_reading
 
 	self.deps.yomitan:get_anki_fields(selected_token.text, yomitan_fields, {
 		text = context.current_subtitle_text,
@@ -525,6 +530,7 @@ function Handler:apply_yomitan_fields(note_fields, entry)
 	end
 
 	set_field(self.config.expression_field, get_field_value(entry, "expression"))
+	set_field(self.config.expression_furigana_field, get_field_value(entry, "furigana-plain"))
 	set_field(self.config.reading_field, get_field_value(entry, "reading"))
 	set_field(self.config.pitch_accents_field, get_field_value(entry, "pitch-accents"))
 	set_field(self.config.pitch_categories_field, get_field_value(entry, "pitch-accent-categories"))
@@ -671,6 +677,11 @@ function Handler:update_range_async(context, direction, completion_callback)
 				local cleaned_adjacent_sid = StringOps.clean_subtitle(adjacent_subtitle.primary_sid)
 				local cleaned_adjacent_secondary_sid = StringOps.clean_subtitle(adjacent_subtitle.secondary_sid)
 
+				if context.current_subtitle_text:find(cleaned_adjacent_sid, 1, true) then
+					done()
+					return
+				end
+
 				-- Shift indices when prepending to maintain relative alignment
 				if direction < 0 then
 					context.first_subtitle = adjacent_subtitle
@@ -729,10 +740,13 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 		key_selection_next = self.config.key_selection_next,
 		key_selection_prev = self.config.key_selection_prev,
 		key_lookup = self.config.key_selector_lookup,
-		key_split = self.config.key_selector_split,
+
 		navigation_delay = self.config.selector_navigation_delay,
 		lookup_on_hover = self.config.selector_lookup_on_hover,
 		lookup_on_navigation = self.config.selector_lookup_on_navigation,
+		lookup_delay = self.config.selector_lookup_delay,
+		selector_mora_hover = self.config.selector_mora_hover,
+		selector_mora_navigation = self.config.selector_mora_navigation,
 		yomitan = self.deps.yomitan,
 		on_expand_prev = function()
 			update_range_fn(-1)
@@ -751,6 +765,9 @@ function Handler:build_selector_style(update_range_fn, was_paused)
 			end
 		end,
 		on_lookup = function(data)
+			if self.pending_lookup_term == data.term and self.pending_lookup_reading == data.reading then
+				return
+			end
 			self.selected_dictionary = nil
 			self.active_entry_expression = nil
 			self.active_entry_reading = nil
@@ -856,7 +873,7 @@ function Handler:change_fields(note_ids, new_data)
 			self.deps.anki:sync_media_fields(
 				note_id,
 				updated_data,
-				self.deps.formatter:substitute(self.config.note_tag),
+				self.deps.builder:format_tag(self.config.note_tag),
 				function()
 					change_notes_countdown:decrease()
 				end
@@ -881,8 +898,6 @@ end
 function Handler:set_active_entry(expression, reading)
 	self.active_entry_expression = expression ~= "" and expression or nil
 	self.active_entry_reading = reading ~= "" and reading or nil
-	self.pending_lookup_term = nil
-	self.pending_lookup_reading = nil
 end
 
 function Handler:new()
@@ -898,14 +913,11 @@ function Handler:new()
 		pending_lookup_reading = nil,
 		manual_start = nil,
 		manual_end = nil,
+		timing_overlay = mp.create_osd_overlay("ass-events"),
 	}
 	setmetatable(obj, self)
 	self.__index = self
 	return obj
-end
-
-function Handler:sync_selection(text)
-	self.last_selection = text ~= "" and text or nil
 end
 
 function Handler:set_manual_start()
@@ -914,7 +926,7 @@ function Handler:set_manual_start()
 		return
 	end
 	self.manual_start = pos
-	Player.notify(string.format("Start: %s", StringOps.format_duration(pos, true)), "info", 2)
+	self:refresh_timing_overlay()
 end
 
 function Handler:set_manual_end()
@@ -923,13 +935,43 @@ function Handler:set_manual_end()
 		return
 	end
 	self.manual_end = pos
-	Player.notify(string.format("End: %s", StringOps.format_duration(pos, true)), "info", 2)
+	self:refresh_timing_overlay()
 end
 
 function Handler:clear_manual_timings()
 	self.manual_start = nil
 	self.manual_end = nil
+	self:refresh_timing_overlay()
 	Player.notify("Timings cleared", "info", 2)
+end
+
+function Handler:refresh_timing_overlay(start_override, end_override)
+	if not self.timing_overlay then
+		return
+	end
+
+	local effective_start = start_override or self.manual_start
+	local effective_end = end_override or self.manual_end
+
+	if not effective_start and not effective_end then
+		self.timing_overlay.data = ""
+		self.timing_overlay:update()
+		return
+	end
+
+	local ass = "{\\an7\\fs25\\bord2\\shad0\\1c&HFFFFFF&\\pos(20,60)}"
+	if effective_start then
+		ass = ass .. string.format("Start: %s", StringOps.format_duration(effective_start, true))
+		if effective_end then
+			ass = ass .. "\\N"
+		end
+	end
+	if effective_end then
+		ass = ass .. string.format("End: %s", StringOps.format_duration(effective_end, true))
+	end
+
+	self.timing_overlay.data = ass
+	self.timing_overlay:update()
 end
 
 function Handler:apply_manual_range(context)
@@ -938,9 +980,12 @@ function Handler:apply_manual_range(context)
 		return
 	end
 
+	local effective_start = self.manual_start or context.sub.start
+	local effective_end = self.manual_end or context.sub["end"]
+
 	local collected = {}
 	for _, entry in ipairs(history) do
-		if entry["end"] > self.manual_start and entry.start < self.manual_end then
+		if entry["end"] > effective_start and entry.start < effective_end then
 			table.insert(collected, entry)
 		end
 	end
@@ -962,12 +1007,14 @@ function Handler:apply_manual_range(context)
 
 	context.sub.primary_sid = combined_primary
 	context.sub.secondary_sid = combined_secondary
-	context.sub.start = self.manual_start
-	context.sub["end"] = self.manual_end
+	context.sub.start = effective_start
+	context.sub["end"] = effective_end
 	context.current_subtitle_text = combined_primary
 	context.first_subtitle = Collections.duplicate(collected[1])
 	context.last_subtitle = Collections.duplicate(collected[#collected])
 	context.expansion_occurred = #collected > 1
+
+	self:refresh_timing_overlay(effective_start, effective_end)
 end
 
 function Handler:perform_anki_save(_context, note_fields)
@@ -977,7 +1024,7 @@ function Handler:perform_anki_save(_context, note_fields)
 		self.config.deck,
 		self.config.note_type,
 		note_fields,
-		self.config.note_tag,
+		self.deps.builder:format_tag(self.config.note_tag),
 		function(note_id, error)
 			if error then
 				if error:match("duplicate") and self.config.update_if_exists then
@@ -990,8 +1037,6 @@ function Handler:perform_anki_save(_context, note_fields)
 			else
 				msg.info("Note added successfully: " .. tostring(note_id))
 				Player.notify("Note added to Anki!", "success", 2)
-				self.manual_start = nil
-				self.manual_end = nil
 				self.deps.anki:gui_browse("nid:" .. tostring(note_id), function() end)
 			end
 		end
@@ -1026,9 +1071,6 @@ function Handler:handle_duplicate_note(note_fields, _error_msg)
 	end
 
 	msg.info("Duplicate search query: " .. query)
-
-	self.manual_start = nil
-	self.manual_end = nil
 
 	self.deps.anki:find_notes(query, function(note_ids, error)
 		if error or not note_ids or #note_ids == 0 then
