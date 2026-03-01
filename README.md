@@ -1,7 +1,7 @@
 # Yomipv (Mac-Compatible Edition)
 
 Yomipv is a script that combines Yomitan with MPV to create Anki cards from Japanese media without leaving the player.
-This version is specifically optimized for MacOS compatibility, fixing common TLS handshake and header issues found on HiAnime/Megacloud.
+This version is specifically optimized for MacOS compatibility and additional Hianime stream feature. Youtube stream also supported because hianime is plugin of yt-dlp.
 
 There's no need to do alt tabs to switch between MPV, texthooker and Yomitan while mining or doing word lookups. 
 It was made designed to be used with [Senren Note Type v5.0.0](https://github.com/BrenoAqua/Senren), but it should work with any note type.
@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/8ff6f71a-c961-4da1-bf9f-b1b2c00143f8
 | Tool | Purpose | Status |
 | :--- | :--- | :--- |
 | **MPV** | Media player | Required for [Media Player](https://github.com/mpv-player/mpv) |
-| **[FFmpeg]** | Media Extractor | Required for [Media Extraction](https://ffmpeg.org/) (falls back to MPV's internal encoder if not found) |
+| **FFmpeg** | Media Extractor | Required for [Media Extraction](https://ffmpeg.org/) (falls back to MPV's internal encoder if not found) |
 | **MPV** | Media player | Required [Media Player](https://github.com/mpv-player/mpv) |
 | **Anki** | Flashcard storage | Required (+ [AnkiConnect](https://ankiweb.net/shared/info/2055492159)) |
 | **Yomitan** | Dictionary & Translation | Required ([Browser Extension](https://yomitan.wiki/)) |
@@ -56,163 +56,6 @@ Core dependencies
 
 ---
 
-# ⌨️ Default Keybindings
-
-| Shortcut | Action |
-| :---: | :--- |
-| `Ctrl + v` | Paste a HiAnime link |
-| `c` | Open word selector |
-| `mouse hover` | Open word selector (if `selector_trigger_on_mouse_move` is enabled) |
-| `Arrow Keys or Mouse hover` | Navigate word selection |
-| `Enter / Return` | Export to Anki (when selector is open) |
-| `a` | Toggle subtitle history panel |
-| `Ctrl + c` | Dictionary lookup popup |
-| `Alt/Opt (Mac) + 1` | Stream Mode |
-| `Alt/Opt (Mac) + 2` | Local Mode |
-
-More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).  
-
-	  
-## ⌨️ Default Keybindings
-   | Shortcut | Action |
-   | :---: | :--- |
-   | `Ctrl + v` | paste a HiAnime link |
-   | `c` | Open word selector |
-   | `Arrow Keys or Mouse hover` | Word selection navigating |
-   | `Enter/return` | Export to Anki (when selector is open) |
-   | `a` | Toggle subtitle history panel |
-   | `Ctrl + c` | Dictionary lookup |
-   | `Alt/Opt (Mac) + 1` | Stream Mode |
-   | `Alt/Opt (Mac) + 2` | Local Mode|
-
-More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).
-More about field handlebar configuration for mining can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/field_handlebars.md).
-
----
-
-# 🧭 Basic Workflow
-
-1. Open a video with **Japanese subtitles** in MPV.
-2. Press **`c`** or **move your mouse after an idle period** (if `selector_trigger_on_mouse_move` is enabled) to activate the word selector.
-3. Navigate using **mouse hover** or **arrow keys** to select a word.
-4. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card.
-
----
-
-# ⌨️ Advanced Features
-
-<table>
-<tr>
-<th colspan="2" align="center">Append Mode</th>
-</tr>
-<tr>
-<td><code>Shift + c</code></td>
-<td>Enter append mode to collect multiple subtitle lines</td>
-</tr>
-<tr>
-<td><code>c</code></td>
-<td>Start word selector</td>
-</tr>
-<tr>
-<td><code>Shift + c</code></td>
-<td>Cancel append mode</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">Selection Expansion</th>
-</tr>
-<tr>
-<td><code>s</code></td>
-<td>Toggle word splitting / mora navigation mode</td>
-</tr>
-<tr>
-<td><code>Alt/Opt (Mac) + Left/Right</code></td>
-<td>Expand selection to adjacent words</td>
-</tr>
-<tr>
-<td><code>Shift + Left/Right</code></td>
-<td>Expand selection to previous/next subtitle line</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">Mora-level Navigation</th>
-</tr>
-<tr>
-<td><code>Hover mora</code></td>
-<td>When <code>selector_mora_hover</code> is enabled, lookup starts from the mora under the cursor instead of the entire word</td>
-</tr>
-<tr>
-<td><code>s</code></td>
-<td>Toggle mora-level keyboard navigation (arrow keys move by mora)</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">Automation (Mouse Trigger)</th>
-</tr>
-<tr>
-<td><strong>Auto-Trigger</strong></td>
-<td>Move mouse after idle to auto-open selector</td>
-</tr>
-<tr>
-<td colspan="2" align="center">
-<small>Enable <code>selector_trigger_on_mouse_move</code> in <code>yomipv.conf</code></small>
-</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">Lookup App</th>
-</tr>
-<tr>
-<td><code>Ctrl + c</code></td>
-<td>Open popup dictionary powered by Yomitan dictionaries</td>
-</tr>
-<tr>
-<td><strong>Right-click word</strong></td>
-<td>Lock lookup so moving cursor does not trigger a new lookup</td>
-</tr>
-<tr>
-<td><strong>Click mora in header</strong></td>
-<td>Narrow lookup to sub-word starting from that mora</td>
-</tr>
-<tr>
-<td><strong>Right-click header</strong></td>
-<td>Return to the previous word in lookup history</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">Manual Timing</th>
-</tr>
-<tr>
-<td><code>q</code></td>
-<td>Set custom start time for audio/image extraction</td>
-</tr>
-<tr>
-<td><code>w</code></td>
-<td>Set custom end time for audio/image extraction</td>
-</tr>
-<tr>
-<td><code>e</code></td>
-<td>Clear manual timing markers</td>
-</tr>
-
-<tr>
-<th colspan="2" align="center">History Panel</th>
-</tr>
-<tr>
-<td><code>a</code></td>
-<td>Toggle subtitle history panel</td>
-</tr>
-<tr>
-<td>Click subtitle</td>
-<td>Select line for expansion (selector open) or seek to timestamp (selector closed)</td>
-</tr>
-
-</table>
-
-For more configuration, you can customize settings in: `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
-
----
-
 ## ⚠️ MacOS Compatibility Fixes (Internal Updates)
    1. **[HiAnime Plugin Optimization](https://github.com/yaaacha/yt-dlp-hianime)**
       The included hianime.py extractor has been modified to:
@@ -224,12 +67,227 @@ For more configuration, you can customize settings in: `script-opts/yomipv.conf`
 	  | Profile Name | Usage Scenario | Key Settings |
 	  | :---: | :---: | :--- |
 	  | [streaming-mode] | Watching via HiAnime/Online | Disables local FFmpeg extraction to rely on mpv's internal stream buffer. Bypasses TLS for extraction. |
-	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio/image extraction from your disk." |
+	  | [local-mode] | Watching downloaded files | "Enables local FFmpeg for faster, high-quality audio and animated image extraction from your local video." |
 	  
 > [!TIP]
 > Switching Profiles: default profile is **stream mode**.  
 > You can change mode with assigned shortcut.  
 > Restart MPV after switching profiles.
+
+---
+	  
+## ⌨️ Default Keybindings
+   | Shortcut | Action |
+   | :---: | :--- |
+   | `Ctrl + v` | Paste a HiAnime link |
+   | `c` | Open word selector |
+   | `mouse hover` | Open word selector (if `selector_trigger_on_mouse_move` is enabled) |
+   | `Arrow Keys or Mouse hover` | Navigate word selection |
+   | `Enter/return` | Export to Anki (when selector is open) |
+   | `a` | Toggle subtitle history panel |
+   | `Ctrl + c` | Dictionary lookup popup |
+   | `Alt/Opt (Mac) + 1` | Stream Mode |
+   | `Alt/Opt (Mac) + 2` | Local Mode|
+
+More about lookup-app can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/lookup-app.md).
+More about field handlebar configuration for mining can be found [here](https://github.com/yaaacha/Yomipv/blob/mac-hianime-compatibility/docs/field_handlebars.md).
+
+---
+
+## 🧭 Basic Workflow
+
+1. Open a video with **Japanese subtitles** in MPV.
+2. Press **`c`** or **move your mouse after an idle period** (if `selector_trigger_on_mouse_move` is enabled) to activate the word selector.
+3. Navigate using **mouse hover** or **arrow keys** to select a word.
+4. Press **`Enter`**, **`c`**, or **left-click** to create an Anki card.
+
+---
+
+## ⌨️ Advanced Features
+
+<table>
+
+<tr>
+<th colspan="2" align="center">Append Mode</th>
+</tr>
+
+<tr>
+<td><code>Shift + c</code></td>
+<td>
+<strong>Enter append mode</strong><br>
+Collect multiple subtitle lines before exporting
+</td>
+</tr>
+
+<tr>
+<td><code>c</code></td>
+<td>
+Start the <strong>word selector</strong> while in append mode
+</td>
+</tr>
+
+<tr>
+<td><code>Shift + c</code></td>
+<td>
+Press again to <strong>cancel append mode</strong>
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">Selection Expansion</th>
+</tr>
+
+<tr>
+<td><code>Ctrl + Left</code><br><code>Ctrl + Right</code></td>
+<td>
+Expand selection to <strong>adjacent words</strong>
+</td>
+</tr>
+
+<tr>
+<td><code>Shift + Left</code><br><code>Shift + Right</code></td>
+<td>
+Expand selection to the <strong>previous / next subtitle line</strong>
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">Mora-level Navigation</th>
+</tr>
+
+<tr>
+<td><code>s</code></td>
+<td>
+Toggle <strong>mora-level keyboard navigation</strong><br>
+<em>Arrow keys move by mora instead of whole word</em>
+</td>
+</tr>
+
+<tr>
+<td><strong>Mouse Hover</strong></td>
+<td>
+When <code>selector_mora_hover</code> is enabled,<br>
+lookup starts from the <strong>mora under the cursor</strong>
+instead of the full word
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">Lookup App</th>
+</tr>
+
+<tr>
+<td><code>Ctrl + c</code></td>
+<td>
+Open popup dictionary powered by <strong>Yomitan dictionaries</strong><br>
+Shows definitions, pitch accents, and frequency data
+</td>
+</tr>
+
+<tr>
+<td><strong>Right-click word</strong></td>
+<td>
+<strong>Lock lookup</strong> so moving the cursor does not trigger another lookup
+</td>
+</tr>
+
+<tr>
+<td><strong>Click mora in header</strong></td>
+<td>
+Narrow the lookup to a <strong>sub-word starting at that mora</strong>
+</td>
+</tr>
+
+<tr>
+<td><strong>Right-click header</strong></td>
+<td>
+Return to the <strong>previous word</strong> in lookup history
+</td>
+</tr>
+
+<tr>
+<td colspan="2" align="center">
+<small>
+See <code>docs/lookup-app.md</code> for full details
+</small>
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">Automation (Mouse Trigger)</th>
+</tr>
+
+<tr>
+<td><strong>Auto Trigger</strong></td>
+<td>
+Automatically open the selector when the mouse moves<br>
+<strong>after being idle</strong>
+</td>
+</tr>
+
+<tr>
+<td colspan="2" align="center">
+<small>
+Enable <code>selector_trigger_on_mouse_move</code> and adjust<br>
+<code>selector_trigger_mouse_idle_time</code> in <code>yomipv.conf</code>
+</small>
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">Manual Timing</th>
+</tr>
+
+<tr>
+<td><code>q</code></td>
+<td>
+Set custom <strong>start time</strong> for audio/image extraction
+</td>
+</tr>
+
+<tr>
+<td><code>w</code></td>
+<td>
+Set custom <strong>end time</strong> for audio/image extraction
+</td>
+</tr>
+
+<tr>
+<td><code>e</code></td>
+<td>
+<strong>Clear manual timing markers</strong><br>
+Unset timings default to subtitle boundaries
+</td>
+</tr>
+
+
+<tr>
+<th colspan="2" align="center">History Panel</th>
+</tr>
+
+<tr>
+<td><code>a</code></td>
+<td>
+Toggle the <strong>subtitle history panel</strong>
+</td>
+</tr>
+
+<tr>
+<td><strong>Click subtitle</strong></td>
+<td>
+Select lines to expand subtitles <em>(selector open)</em><br>
+or <strong>seek to the timestamp</strong> <em>(selector closed)</em>
+</td>
+</tr>
+
+</table>
+
+For more configuration, you can customize settings in: `script-opts/yomipv.conf`, `mpv/mpv.cong` and `mpv/input.conf`
 
 ---
 
@@ -259,7 +317,6 @@ If you already have Yomipv installed and want to update to the latest version (i
    | :---: | :---: | :---: |
    | Error -9806 / -36 | TLS Handshake failure | Add tls-verify=no to mpv.conf (no --) |
    | Status 2 | Audio Extraction Failed | Check Referer headers in hianime.py |
-   | IndentationError | Python Spacing | Ensure 4-space indentation in hianime.py |
    | Image Missing | Missing Libs | Run brew install libwebp libavif |
    
 > [!IMPORTANT]
@@ -267,7 +324,7 @@ If you already have Yomipv installed and want to update to the latest version (i
 
 > [!WARNING]
 > **Linux and Windows Support Not Tested for this version**
-> This script has primarily been developed and tested on Windows and modified on MacOS. While cross-platform support is intended, Linux and Windows users may encounter issues. Please report any bugs or compatibility problems.
+> This script initially developed on Windows and modified for MacOS compatibility. While cross-platform support is intended, Linux and Windows users may encounter issues.
 
 # 🏛 Acknowledgements
 Yomipv (Mac-Compatible Edition) was made possible by open source software and the work of its contributors. This project relies on the following components:
